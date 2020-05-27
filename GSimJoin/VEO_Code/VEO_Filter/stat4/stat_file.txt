@@ -1,0 +1,13 @@
+GSimJoin: VEO Similarity(filters)
+Choice: 3
+Similarity Score Threshold: 60
+Dataset Size: 1000
+Mismatch: 0
+No of Buckets: 2
+Loose Filter Count: 487918
+Strict Filter Count: 487918
+Static Filter Count: 2123
+Partiiton Filter Count: 195
+Final Similar Pair Count: 190
+Memory used: 4.33203 MB
+Total Time Taken: 124 milliseconds

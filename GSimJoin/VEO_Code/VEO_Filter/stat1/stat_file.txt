@@ -1,0 +1,8 @@
+GSimJoin: VEO Similarity(filters)
+Choice: 1
+Similarity Score Threshold: 60
+Dataset Size: 1000
+Loose Filter Count: 487918
+Final Similar Pair Count: 190
+Memory used: 3.72656 MB
+Total Time Taken: 122 milliseconds

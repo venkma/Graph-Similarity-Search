@@ -1,0 +1,9 @@
+GSimRSJoin: Sequence Similarity(naive)
+Dataset size of R: 2500
+Dataset size of S: 7500
+Shingle size: 3
+Similarity Score Threshold: 60
+Similar Graphs: 2248
+Memory used: 10.4961 MB
+Similarity Time: 55 milliseconds
+Total Time Taken: 1832 milliseconds

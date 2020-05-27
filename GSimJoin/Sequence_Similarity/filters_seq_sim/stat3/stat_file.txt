@@ -1,0 +1,14 @@
+GSimJoin: Sequence Similarity(filters)
+Dataset size: 1000
+Shingle size: 3
+Similarity Score Threshold: 60
+Filter choice: 3
+No. of Bands: 10
+No. of Rows: 10
+Loose Size Filter count: 499500
+Common Vertex Filter count: 23
+Banding Technique filter candidates pair count: 23
+Final candidates pair count: 23
+Similar Graphs: 23
+Memory used: 4.10156 MB
+Total Time Taken: 70 milliseconds

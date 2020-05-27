@@ -1,0 +1,7 @@
+GSimRSJoin: VEO Similarity(naive)
+Dataset size of R: 2500
+Dataset size of S: 7500
+Similarity Score Threshold: 60
+Similarity pairs: 50404
+Memory used: 7.51953 MB
+Total Time Taken: 6417 milliseconds

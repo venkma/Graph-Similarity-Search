@@ -1,0 +1,13 @@
+GSimSearch: VEO Similarity(filters)
+Choice: 4
+Similarity Score Threshold: 60
+Dataset Size of R: 2500
+Dataset Size of S: 7500
+Mismatch: 0
+No of Buckets: 0
+Loose Filter Count: 18572682
+Strict Filter Count: 18418682
+Dynamic Filter Count: 133052
+Final Similar Pair Count: 50400
+Memory used: 10.6836 MB
+Total Time Taken: 4531 milliseconds

@@ -1,0 +1,10 @@
+GSimJoin: Sequence Similarity(filters)
+Dataset size: 1000
+Shingle size: 3
+Similarity Score Threshold: 60
+Filter choice: 2
+Loose Size Filter count: 499500
+Common Vertex Filter count: 23
+Similar Graphs: 23
+Memory used: 4.01953 MB
+Total Time Taken: 70 milliseconds

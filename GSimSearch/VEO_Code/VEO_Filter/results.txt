@@ -1,0 +1,339 @@
+######################################################################################################################################
+
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 5 1000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 1000 Mismatch: 0 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 487918
+Strict Filter Count: 487918
+Dynamic Filter Count: 488
+Partiiton Filter Count: 195
+Final Similar Pair Count: 190
+4.55078
+Total Time Taken: 0.119
+
+######################################################################################################################################
+
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 1 60 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 1 Threshold: 60 Dataset Size: 10000 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Final Similar Pair Count: 130962
+7.83203
+Total Time Taken: 13.372
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 2 60 0 10000 stat 
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 2 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 0 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Final Similar Pair Count: 130962
+7.92969
+Total Time Taken: 14.683
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 3 60 0 0 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 3 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 0 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Static Filter Count: 903832
+Final Similar Pair Count: 130962
+10.7109
+Total Time Taken: 13.172
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 3 60 0 2 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 3 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 2 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Static Filter Count: 903832
+Partiiton Filter Count: 131077
+Final Similar Pair Count: 130962
+12.3008
+Total Time Taken: 13.158
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 3 60 0 5 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 3 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Static Filter Count: 903832
+Partiiton Filter Count: 131021
+Final Similar Pair Count: 130962
+14.3047
+Total Time Taken: 13.637
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 3 60 0 10 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 3 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 10 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Static Filter Count: 903832
+Partiiton Filter Count: 131017
+Final Similar Pair Count: 130962
+17.625
+Total Time Taken: 13.806
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 2 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 2 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131533
+Final Similar Pair Count: 130962
+12.4023
+Total Time Taken: 9.698
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 5 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131112
+Final Similar Pair Count: 130962
+14.2305
+Total Time Taken: 9.93
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 5 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131112
+Final Similar Pair Count: 130962
+14.3164
+Total Time Taken: 9.316
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 10 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 10 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131084
+Final Similar Pair Count: 130962
+17.8359
+Total Time Taken: 10.861
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 3 60 1 10 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 3 Threshold: 60 Dataset Size: 10000 Mismatch: 1 No of Buckets: 10 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Mismatch Filter Count: 130556
+Static Filter Count: 903832
+Partiiton Filter Count: 131017
+Mismatch Filter Count: 130556
+Final Similar Pair Count: 130555
+17.707
+Total Time Taken: 13.914
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 1 10 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 1 No of Buckets: 10 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Mismatch Filter Count: 130557
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131084
+Mismatch Filter Count: 130557
+Final Similar Pair Count: 130555
+17.8477
+Total Time Taken: 10.15
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 1 2 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 1 No of Buckets: 2 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Mismatch Filter Count: 130557
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131533
+Mismatch Filter Count: 130557
+Final Similar Pair Count: 130555
+12.4766
+Total Time Taken: 9.833
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 1 5 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 1 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Mismatch Filter Count: 130557
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131112
+Mismatch Filter Count: 130557
+Final Similar Pair Count: 130555
+14.2148
+Total Time Taken: 10.726
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 2 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 2 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131533
+Final Similar Pair Count: 130962
+12.4375
+Total Time Taken: 9.788
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 0 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 0 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Final Similar Pair Count: 130962
+10.707
+Total Time Taken: 10.79
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 1 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 1 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 182666
+Final Similar Pair Count: 130962
+11.7305
+Total Time Taken: 10.037
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 2 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 2 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131533
+Final Similar Pair Count: 130962
+12.3984
+Total Time Taken: 10.007
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 3 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 3 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131179
+Final Similar Pair Count: 130962
+12.8633
+Total Time Taken: 10.172
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 4 10000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 10000 Mismatch: 0 No of Buckets: 4 
+ubound: 2.33333
+Loose Filter Count: 49156134
+Strict Filter Count: 49156134
+Dynamic Filter Count: 354640
+Partiiton Filter Count: 131165
+Final Similar Pair Count: 130962
+13.8203
+Total Time Taken: 10.313
+
+######################################################################################################################################
+
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 5 20000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 20000 Mismatch: 0 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 194934343
+Strict Filter Count: 194934343
+Dynamic Filter Count: 368528
+Partiiton Filter Count: 134269
+Final Similar Pair Count: 133986
+25.6562
+Total Time Taken: 59.612
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 2 20000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 20000 Mismatch: 0 No of Buckets: 2 
+ubound: 2.33333
+Loose Filter Count: 194934343
+Strict Filter Count: 194934343
+Dynamic Filter Count: 368528
+Partiiton Filter Count: 134857
+Final Similar Pair Count: 133986
+21.8203
+Total Time Taken: 50.434
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 10 20000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 20000 Mismatch: 0 No of Buckets: 10 
+ubound: 2.33333
+Loose Filter Count: 194934343
+Strict Filter Count: 194934343
+Dynamic Filter Count: 368528
+Partiiton Filter Count: 134138
+Final Similar Pair Count: 133986
+32.4766
+Total Time Taken: 56.979
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 0 5 20000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 20000 Mismatch: 0 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 194934343
+Strict Filter Count: 194934343
+Dynamic Filter Count: 368528
+Partiiton Filter Count: 134269
+Final Similar Pair Count: 133986
+25.6172
+Total Time Taken: 55.669
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 1 5 20000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 20000 Mismatch: 1 No of Buckets: 5 
+ubound: 2.33333
+Loose Filter Count: 194934343
+Strict Filter Count: 194934343
+Mismatch Filter Count: 133200
+Dynamic Filter Count: 368528
+Partiiton Filter Count: 134269
+Mismatch Filter Count: 133200
+Final Similar Pair Count: 133196
+25.582
+Total Time Taken: 55.32
+ayush@ayush:~/Desktop/VEO_Code/VEO_Filter$ ./filter ../datasets/sorted_dataset_5_40.txt 4 60 1 2 20000 stat
+Graph Dataset parsed.
+Graph Dataset sorted.
+Mode: 4 Threshold: 60 Dataset Size: 20000 Mismatch: 1 No of Buckets: 2 
+ubound: 2.33333
+Loose Filter Count: 194934343
+Strict Filter Count: 194934343
+Mismatch Filter Count: 133205
+Dynamic Filter Count: 368528
+Partiiton Filter Count: 134857
+Mismatch Filter Count: 133205
+Final Similar Pair Count: 133196
+21.8242
+Total Time Taken: 37.899
+
+

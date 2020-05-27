@@ -1,0 +1,8 @@
+GSimSearch: VEO Similarity(naive)
+Dataset size: 7499
+Query Index: 850
+Query Graph id: 103296
+Similarity Score Threshold: 20
+Similarity pairs: 20
+Memory used: 6.34766 MB
+Total Time Taken: 4 milliseconds

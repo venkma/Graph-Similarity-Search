@@ -1,0 +1,9 @@
+GSimSearch: Sequence Similarity(naive)
+Dataset size: 7499
+Query Index: 956
+Query Graph id: 105551
+Shingle size: 3
+Similarity Score Threshold: 20
+Similarity pairs: 3
+Memory used: 8.6875 MB
+Total Time Taken: 62 milliseconds

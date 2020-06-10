@@ -153,6 +153,7 @@ int main(int argc, char const *argv[])
 	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
 	cout << "Similarity pairs: " << simPairCount << endl;
 	cout << "Memory used: " << memoryUsage()  << " MB" << endl;
+	cout << "Similarity Time Taken: "<< global_time << " milliseconds" << endl;
 	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1)) << " milliseconds" << endl;
 
 	// Writing statistics to the final stat file
@@ -163,6 +164,7 @@ int main(int argc, char const *argv[])
 	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
 	stat_file << "Similarity pairs: " << simPairCount << endl;
 	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file << "Similarity Time Taken: "<< global_time << " milliseconds" << endl;
 	stat_file << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
 	stat_file.close();
 	

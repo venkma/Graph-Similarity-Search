@@ -59,11 +59,8 @@ struct GraphComparator
 };
 
 // To apply Loose size and Strong size filter to input graph dataset
-void applyFilters(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S, vector<bool> &candidate_graphs_R, vector<bool> &candidate_graphs_S, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, int dataset_size_R, int dataset_size_S, int choice, double simScore_threshold, string res_dir)
+void applyFilters(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S, vector<bool> &candidate_graphs_R, vector<bool> &candidate_graphs_S, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, int dataset_size_R, int dataset_size_S, int choice, double simScore_threshold, long long &loose_filter_count, long long &strong_filter_count, long long &candidate_graph_count_R, long long &candidate_graph_count_S)
 {
-	// count of pruned graphs after each filter
-	long long loose_filter_count = 0, strong_filter_count = 0;
-
 	simScore_threshold = simScore_threshold/100.0;
 	
 	for(int gR = 0; gR < graph_dataset_R.size(); gR++)
@@ -98,16 +95,28 @@ void applyFilters(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S
 					{
 						strong_filter_count++;
 						// Adding graph to pruned graph data structure
-						candidate_graphs_S[gS] = true;
-						candidate_graphs_R[gR] = true;
+						if(!candidate_graphs_S[gS]){
+							candidate_graph_count_S++;
+							candidate_graphs_S[gS] = true;
+						}
+						if(!candidate_graphs_R[gR]){
+							candidate_graph_count_R++;
+							candidate_graphs_R[gR] = true;
+						}
 						candidate_pairs[gR].insert(gS);
 					}
 				}
 				else
 				{
 					// Adding graph to pruned graph data structure
-					candidate_graphs_S[gS] = true;
-					candidate_graphs_R[gR] = true;
+					if(!candidate_graphs_S[gS]){
+						candidate_graph_count_S++;
+						candidate_graphs_S[gS] = true;
+					}
+					if(!candidate_graphs_R[gR]){
+						candidate_graph_count_R++;
+						candidate_graphs_R[gR] = true;
+					}
 					candidate_pairs[gR].insert(gS);
 				}
 			}
@@ -142,16 +151,28 @@ void applyFilters(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S
 					{
 						strong_filter_count++;
 						// Adding graph to pruned graph data structure
-						candidate_graphs_S[gS] = true;
-						candidate_graphs_R[gR] = true;
+						if(!candidate_graphs_S[gS]){
+							candidate_graph_count_S++;
+							candidate_graphs_S[gS] = true;
+						}
+						if(!candidate_graphs_R[gR]){
+							candidate_graph_count_R++;
+							candidate_graphs_R[gR] = true;
+						}
 						candidate_pairs[gR].insert(gS);
 					}
 				}
 				else
 				{
 					// Adding graph to pruned graph data structure
-					candidate_graphs_S[gS] = true;
-					candidate_graphs_R[gR] = true;
+					if(!candidate_graphs_S[gS]){
+						candidate_graph_count_S++;
+						candidate_graphs_S[gS] = true;
+					}
+					if(!candidate_graphs_R[gR]){
+						candidate_graph_count_R++;
+						candidate_graphs_R[gR] = true;
+					}
 					candidate_pairs[gR].insert(gS);
 				}
 			}
@@ -162,16 +183,6 @@ void applyFilters(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S
 			}
 		}
 	}	
-	// Writing statistics to the stat file
-	ofstream stat_file("./"+res_dir+"/stat_final.txt",ios::app);
-	stat_file << "Loose Size Filter count: " << loose_filter_count << endl;
-	cout << "Loose size filter candidate pair count: " << loose_filter_count << endl;
-	if(choice > 1)
-	{
-		stat_file << "Common Vertex Filter count: " << strong_filter_count << endl;
-		cout << "Common Vertex Filter candidates pair count: " << strong_filter_count << endl;
-	}
-	stat_file.close();
 }
 
 // To Preprocess the pruned graph pairs 
@@ -201,10 +212,9 @@ void preProcess(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S, 
 }
 
 // To prune graphs using Banding Technique filter
-void bandingTech(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, unordered_map<unsigned, unordered_set<unsigned> > &banding_pairs, int BANDS, int ROWS, string res_dir)
+void bandingTech(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, unordered_map<unsigned, unordered_set<unsigned> > &banding_pairs, int BANDS, int ROWS, long long &banding_pair_count)
 {
 	unsigned hashVal_R, hashVal_S;
-	long long banding_pair_cnt = 0; 
 	for(int b = 0; b < BANDS; b++)
 	{
 		for(auto g_iter_R = candidate_pairs.begin(); g_iter_R != candidate_pairs.end(); g_iter_R++)
@@ -219,16 +229,10 @@ void bandingTech(vector<Graph> &graph_dataset_R, vector<Graph> &graph_dataset_S,
 					if(banding_pairs[g_iter_R->first].find(*g_iter_S) == banding_pairs[g_iter_R->first].end() && hashVal_R == hashVal_S)
 					{
 						banding_pairs[g_iter_R->first].insert(*g_iter_S);
-						banding_pair_cnt++;
+						banding_pair_count++;
 					}
 				}
 			}
 		}
 	}
-	cout << "Banding Technique filter candidates pair count: " << banding_pair_cnt << endl;
-
-	// Writing statistics to the stat file
-	ofstream stat_file("./"+res_dir+"/stat_final.txt",ios::app);
-	stat_file << "Banding Technique filter candidates pair count: " << banding_pair_cnt << endl;
-	stat_file.close();
 }

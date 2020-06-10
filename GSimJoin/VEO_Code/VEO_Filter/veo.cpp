@@ -2,7 +2,7 @@
 #include <cmath>
 #include <chrono>
 
-bool freqComp(pair<unsigned, unsigned> v1, pair<unsigned, unsigned> v2)
+bool freqComp(pair<pair<unsigned, unsigned>,unsigned> v1, pair<pair<unsigned, unsigned>,unsigned> v2)
 { 
     return (v1.second > v2.second); 
 }
@@ -97,25 +97,31 @@ void VEO:: ranking(vector<Graph> &graph_dataset)
 	for(int g_ind = 0; g_ind < graph_dataset.size(); g_ind++)
 	{
 		// traversing the vertex-set
+
 		for(int vtx_ind = 0; vtx_ind < graph_dataset[g_ind].vertices.size(); vtx_ind++)
 		{
-			if(rank.find(graph_dataset[g_ind].vertices[vtx_ind]) != rank.end())
-				rank[graph_dataset[g_ind].vertices[vtx_ind]]++;
+			pair<unsigned, unsigned> vtx_pair = make_pair(graph_dataset[g_ind].vertices[vtx_ind], graph_dataset[g_ind].vertices[vtx_ind]);
+			if(rank.find(vtx_pair) != rank.end())
+				rank[vtx_pair]++;
 			else
-				rank[graph_dataset[g_ind].vertices[vtx_ind]] = 0;
+				rank[vtx_pair] = 0;
 		}
 		// traversing the edge-set
 		for(int edge_ind = 0; edge_ind < graph_dataset[g_ind].edges.size(); edge_ind++)
 		{
-			string edge_str = to_string(graph_dataset[g_ind].edges[edge_ind].first) + to_string(graph_dataset[g_ind].edges[edge_ind].second);
-			if(rank.find(stoll(edge_str)) != rank.end())
-				rank[stoll(edge_str)]++;
+			pair<unsigned, unsigned> edge_pair;
+			if(graph_dataset[g_ind].edges[edge_ind].first > graph_dataset[g_ind].edges[edge_ind].second)
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].second, graph_dataset[g_ind].edges[edge_ind].first);
 			else
-				rank[stoll(edge_str)] = 0;
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].first, graph_dataset[g_ind].edges[edge_ind].second);
+			if(rank.find(edge_pair) != rank.end())
+				rank[edge_pair]++;
+			else
+				rank[edge_pair] = 0;
 		}
 	}
 
-	vector<pair<unsigned long long int, unsigned>> freqList;
+	vector<pair<pair<unsigned, unsigned>, unsigned long> > freqList;
 	copy(rank.begin(), rank.end(), back_inserter(freqList));
 	sort(freqList.begin(), freqList.end(), freqComp);
 
@@ -155,12 +161,19 @@ void VEO:: buildPrefix(vector<Graph> &graph_dataset, int mode, bool isBucket, in
 		// Putting vertex and edge ranks together
 		vector<unsigned> graph_ranks;
 		for(int vtx_ind = 0; vtx_ind < graph_dataset[g_ind].vertices.size(); vtx_ind++)
-			graph_ranks.push_back(rank[graph_dataset[g_ind].vertices[vtx_ind]]);
+		{
+			pair<unsigned, unsigned> vtx_pair = make_pair(graph_dataset[g_ind].vertices[vtx_ind], graph_dataset[g_ind].vertices[vtx_ind]);
+			graph_ranks.push_back(rank[vtx_pair]);
+		}
 		
 		for(int edge_ind = 0; edge_ind < graph_dataset[g_ind].edges.size(); edge_ind++)
 		{
-			string edge_str = to_string(graph_dataset[g_ind].edges[edge_ind].first) + to_string(graph_dataset[g_ind].edges[edge_ind].second);
-			graph_ranks.push_back(rank[stoll(edge_str)]);
+			pair<unsigned, unsigned> edge_pair;
+			if(graph_dataset[g_ind].edges[edge_ind].first > graph_dataset[g_ind].edges[edge_ind].second)
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].second, graph_dataset[g_ind].edges[edge_ind].first);
+			else
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].first, graph_dataset[g_ind].edges[edge_ind].second);
+			graph_ranks.push_back(rank[edge_pair]);
 		}
 
 		// sort the ranks of the graph in descending order  
@@ -223,7 +236,6 @@ bool VEO:: indexFilter(Graph &g1, Graph &g2, int index1, int index2, int mode, b
 	unsigned start2 = 0;
 	bool out = true;
 	long double commonTotal=0;
-	
 	while(start1 < prefix1 && start2 < prefix2)
 	{
 		if(rankList[index1][start1] == rankList[index2][start2] && isBucket)
@@ -246,10 +258,15 @@ bool VEO:: indexFilter(Graph &g1, Graph &g2, int index1, int index2, int mode, b
 	if(out)
 		return out;
 	indexCount++;
+	//cout << "prefix1: " << prefix1 << " , prefix2: " << prefix2 << endl;
+	//cout << "start1: " << start1 << " , start2: " << start2 << endl;
 	if(isBucket)
 	{
 		for(int i = 0; i < no_of_buckets; i++)
+		{
+			//cout << bucket[index1][i][start1] << " , " << bucket[index2][i][start2] << endl;
 			commonTotal += (long double)min(bucket[index1][i][start1], bucket[index2][i][start2]);
+		}
 
 		long double sizeSum = (long double)(g1.vertexCount + g1.edgeCount + g2.vertexCount + g2.edgeCount);
 		long double veoEstimate =(long double)200.0*((long double)commonTotal/(long double)(sizeSum));

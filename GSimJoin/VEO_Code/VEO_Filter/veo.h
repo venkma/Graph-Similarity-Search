@@ -1,11 +1,11 @@
 #include "graph.h"
 #include<unordered_set>
-#include <unordered_map>
+#include <map>
 
 class VEO{
 public:
 	double ubound;
-	unordered_map<unsigned long long int, unsigned long> rank;
+	map< pair<unsigned, unsigned>, unsigned long > rank;
 	vector<vector<unsigned long>> rankList;
 	vector<vector<vector<unsigned>>> bucket;
 	VEO(double threshold)

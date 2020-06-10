@@ -2,7 +2,7 @@
 #include <cmath>
 #include <chrono>
 
-bool freqComp(pair<unsigned, unsigned> v1, pair<unsigned, unsigned> v2)
+bool freqComp(pair<pair<unsigned, unsigned>, unsigned long> v1, pair<pair<unsigned, unsigned>, unsigned long> v2)
 { 
     return (v1.second > v2.second); 
 }
@@ -89,40 +89,50 @@ void VEO:: ranking(vector<Graph> &graph_dataset, Graph &query_graph)
 		// traversing the vertex-set
 		for(int vtx_ind = 0; vtx_ind < graph_dataset[g_ind].vertices.size(); vtx_ind++)
 		{
-			if(rank.find(graph_dataset[g_ind].vertices[vtx_ind]) != rank.end())
-				rank[graph_dataset[g_ind].vertices[vtx_ind]]++;
+			pair<unsigned, unsigned> vtx_pair = make_pair(graph_dataset[g_ind].vertices[vtx_ind], graph_dataset[g_ind].vertices[vtx_ind]);
+			if(rank.find(vtx_pair) != rank.end())
+				rank[vtx_pair]++;
 			else
-				rank[graph_dataset[g_ind].vertices[vtx_ind]] = 0;
+				rank[vtx_pair] = 0;
 		}
 		// traversing the edge-set
 		for(int edge_ind = 0; edge_ind < graph_dataset[g_ind].edges.size(); edge_ind++)
 		{
-			string edge_str = to_string(graph_dataset[g_ind].edges[edge_ind].first) + to_string(graph_dataset[g_ind].edges[edge_ind].second);
-			if(rank.find(stoll(edge_str)) != rank.end())
-				rank[stoll(edge_str)]++;
+			pair<unsigned, unsigned> edge_pair;
+			if(graph_dataset[g_ind].edges[edge_ind].first > graph_dataset[g_ind].edges[edge_ind].second)
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].second, graph_dataset[g_ind].edges[edge_ind].first);
 			else
-				rank[stoll(edge_str)] = 0;
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].first, graph_dataset[g_ind].edges[edge_ind].second);
+			if(rank.find(edge_pair) != rank.end())
+				rank[edge_pair]++;
+			else
+				rank[edge_pair] = 0;
 		}
 	}
 	// traversing the vertex-set of query graph
 	for(int vtx_ind = 0; vtx_ind < query_graph.vertices.size(); vtx_ind++)
 	{
-		if(rank.find(query_graph.vertices[vtx_ind]) != rank.end())
-			rank[query_graph.vertices[vtx_ind]]++;
+		pair<unsigned, unsigned> vtx_pair = make_pair(query_graph.vertices[vtx_ind], query_graph.vertices[vtx_ind]);
+		if(rank.find(vtx_pair) != rank.end())
+			rank[vtx_pair]++;
 		else
-			rank[query_graph.vertices[vtx_ind]] = 0;
+			rank[vtx_pair] = 0;
 	}
 	// traversing the edge-set of query graph
 	for(int edge_ind = 0; edge_ind < query_graph.edges.size(); edge_ind++)
 	{
-		string edge_str = to_string(query_graph.edges[edge_ind].first) + to_string(query_graph.edges[edge_ind].second);
-		if(rank.find(stoll(edge_str)) != rank.end())
-			rank[stoll(edge_str)]++;
+		pair<unsigned, unsigned> edge_pair;
+		if(query_graph.edges[edge_ind].first > query_graph.edges[edge_ind].second)
+			edge_pair = make_pair(query_graph.edges[edge_ind].second, query_graph.edges[edge_ind].first);
 		else
-			rank[stoll(edge_str)] = 0;
+			edge_pair = make_pair(query_graph.edges[edge_ind].first, query_graph.edges[edge_ind].second);
+		if(rank.find(edge_pair) != rank.end())
+			rank[edge_pair]++;
+		else
+			rank[edge_pair] = 0;
 	}
 
-	vector<pair<unsigned long long int, unsigned>> freqList;
+	vector<pair<pair<unsigned, unsigned>, unsigned long > > freqList;
 	copy(rank.begin(), rank.end(), back_inserter(freqList));
 	sort(freqList.begin(), freqList.end(), freqComp);
 
@@ -161,12 +171,19 @@ void VEO:: buildPrefix(vector<Graph> &graph_dataset, Graph &query_graph, int mod
 		// Putting vertex and edge ranks together
 		vector<unsigned> graph_ranks;
 		for(int vtx_ind = 0; vtx_ind < graph_dataset[g_ind].vertices.size(); vtx_ind++)
-			graph_ranks.push_back(rank[graph_dataset[g_ind].vertices[vtx_ind]]);
+		{
+			pair<unsigned, unsigned> vtx_pair = make_pair(graph_dataset[g_ind].vertices[vtx_ind], graph_dataset[g_ind].vertices[vtx_ind]);
+			graph_ranks.push_back(rank[vtx_pair]);
+		}
 		
 		for(int edge_ind = 0; edge_ind < graph_dataset[g_ind].edges.size(); edge_ind++)
 		{
-			string edge_str = to_string(graph_dataset[g_ind].edges[edge_ind].first) + to_string(graph_dataset[g_ind].edges[edge_ind].second);
-			graph_ranks.push_back(rank[stoll(edge_str)]);
+			pair<unsigned, unsigned> edge_pair;
+			if(graph_dataset[g_ind].edges[edge_ind].first > graph_dataset[g_ind].edges[edge_ind].second)
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].second, graph_dataset[g_ind].edges[edge_ind].first);
+			else
+				edge_pair = make_pair(graph_dataset[g_ind].edges[edge_ind].first, graph_dataset[g_ind].edges[edge_ind].second);
+			graph_ranks.push_back(rank[edge_pair]);
 		}
 
 		// sort the ranks of the graph in descending order  
@@ -214,12 +231,20 @@ void VEO:: buildPrefix(vector<Graph> &graph_dataset, Graph &query_graph, int mod
 	// Putting vertex and edge ranks of query graph together
 	vector<unsigned> graph_ranks;
 	for(int vtx_ind = 0; vtx_ind < query_graph.vertices.size(); vtx_ind++)
-		graph_ranks.push_back(rank[query_graph.vertices[vtx_ind]]);
+	{
+		pair<unsigned, unsigned> vtx_pair = make_pair(query_graph.vertices[vtx_ind], query_graph.vertices[vtx_ind]);
+		graph_ranks.push_back(rank[vtx_pair]);
+	}
 	
 	for(int edge_ind = 0; edge_ind < query_graph.edges.size(); edge_ind++)
 	{
-		string edge_str = to_string(query_graph.edges[edge_ind].first) + to_string(query_graph.edges[edge_ind].second);
-		graph_ranks.push_back(rank[stoll(edge_str)]);
+
+		pair<unsigned, unsigned> edge_pair;
+		if(query_graph.edges[edge_ind].first > query_graph.edges[edge_ind].second)
+			edge_pair = make_pair(query_graph.edges[edge_ind].second, query_graph.edges[edge_ind].first);
+		else
+			edge_pair = make_pair(query_graph.edges[edge_ind].first, query_graph.edges[edge_ind].second);
+		graph_ranks.push_back(rank[edge_pair]);
 	}
 
 	// sort the ranks of the query graph in descending order  

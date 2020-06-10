@@ -50,11 +50,8 @@ int commonVertices(Graph &g1, Graph &g2)
 }
 
 // To apply Loose size and Strong size filter to input graph dataset
-void applyFilters(vector<Graph> &graph_dataset, vector<bool> &candidate_graphs, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, int dataset_size, int choice, double simScore_threshold, string res_dir)
+void applyFilters(vector<Graph> &graph_dataset, vector<bool> &candidate_graphs, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, int dataset_size, int choice, double simScore_threshold, long long &loose_filter_count, long long &strong_filter_count, long long &candidate_graph_count)
 {
-	// count of pruned graphs after each filter
-	long long loose_filter_count = 0, strong_filter_count = 0, candidate_graph_count = 0;
-
 	// Loose Size filter
 	simScore_threshold = simScore_threshold/100.0;
 
@@ -83,20 +80,28 @@ void applyFilters(vector<Graph> &graph_dataset, vector<bool> &candidate_graphs, 
 					{
 						strong_filter_count++;
 						// Adding graph to pruned graph data structure
-						if(!candidate_graphs[g2])
+						if(!candidate_graphs[g2]){
+							candidate_graph_count++;
 							candidate_graphs[g2] = true;
-						if(!candidate_graphs[g1])
+						}
+						if(!candidate_graphs[g1]){
+							candidate_graph_count++;
 							candidate_graphs[g1] = true;
+						}
 						candidate_pairs[g1].insert(g2);
 					}
 				}
 				else
 				{
 					// Adding graph to pruned graph data structure
-					if(!candidate_graphs[g2])
+					if(!candidate_graphs[g2]){
+						candidate_graph_count++;
 						candidate_graphs[g2] = true;
-					if(!candidate_graphs[g1])
+					}
+					if(!candidate_graphs[g1]){
+						candidate_graph_count++;
 						candidate_graphs[g1] = true;
+					}
 					candidate_pairs[g1].insert(g2);
 				}
 			}
@@ -107,17 +112,6 @@ void applyFilters(vector<Graph> &graph_dataset, vector<bool> &candidate_graphs, 
 			}
 		}
 	}
-	// Writing statistics to the stat file
-	ofstream stat_file("./"+res_dir+"/stat_file.txt",ios::app);
-	stat_file << "Loose Size Filter count: " << loose_filter_count << endl;
-	cout << "Loose size filter candidate pair count: " << loose_filter_count << endl;
-	if(choice > 1)
-	{
-		stat_file << "Common Vertex Filter count: " << strong_filter_count << endl;
-		cout << "Strong size filter candidates pair count: " << strong_filter_count << endl;
-	}
-	stat_file.close();
-
 }
 
 // To Preprocess the pruned graph pairs 

@@ -11,7 +11,7 @@ void loadPageRanks(ifstream &pagerank_file, vector<Graph> &graph_dataset, int &d
 bool vertexComp2(Vertex &v1, Vertex &v2);
 
 // final sequence similarity computation of pruned pairs
-void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, vector<int> &global_score_freq, double simScore_threshold, string res_dir);
+void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, vector<int> &global_score_freq, double simScore_threshold, vector<pair<pair<unsigned, unsigned>, double>> &g_res, unsigned long long &simPairCount);
 
 // graph comparator for sorting graph dataset
 bool graphComp(Graph &g1, Graph &g2);
@@ -54,6 +54,9 @@ int main(int argc, char const *argv[])
 	const string res_dir = argv[argc-1]; // directory in which all stat files would be stored
 	mkdir(res_dir.c_str(),0777);
 	vector<Graph> graph_dataset; // Input graph dataset
+	unsigned long long simPairCount = 0; // count of allsimilar pairs
+	long long loose_filter_count = 0, strong_filter_count = 0, candidate_graph_count = 0, banding_pair_count = 0; // count of pruned graphs after each filter
+	vector<pair<pair<unsigned, unsigned>, double>> g_res; // stores all the similar graphs 
 
 	vector<bool> candidate_graphs; // pruned graphs
 	unordered_map<unsigned, unordered_set<unsigned> > candidate_pairs; // candidate pairs after filters 1 & 2
@@ -124,7 +127,7 @@ int main(int argc, char const *argv[])
 	chrono::high_resolution_clock::time_point cl0 = chrono::high_resolution_clock::now();
 	
 	// Applies Loose size and Strong size filter to input graph dataset
-	applyFilters(graph_dataset, candidate_graphs, candidate_pairs, dataset_size, choice, simScore_threshold, res_dir);
+	applyFilters(graph_dataset, candidate_graphs, candidate_pairs, dataset_size, choice, simScore_threshold, loose_filter_count, strong_filter_count, candidate_graph_count);
 	cout << "Loose-size and Common-vertex Filters are done." <<endl;
 
 	// Preprocesses the pruned graph pairs 
@@ -141,13 +144,13 @@ int main(int argc, char const *argv[])
 		bandingTech(graph_dataset, candidate_graphs, banding_pairs, BANDS, ROWS);
 		cout<<"Banding Technique filter is done." <<endl;
 
-		unsigned long long banding_filter_count = 0, final_cand_pair_count = 0;
+		long long banding_pair_count = 0;
 		// Performs intersection between pruned graphs (after filter 1 & 2) with pruned graphs (after filter 3)
 		for(auto g1 = banding_pairs.begin(); g1 != banding_pairs.end(); g1++)
 		{
 			for(auto g2 = banding_pairs[g1->first].begin(); g2 != g1->second.end(); g2++)
 			{
-				banding_filter_count++;
+				banding_pair_count++;
 				if( 
 					(
 						candidate_pairs.find(g1->first)!=candidate_pairs.end() 
@@ -163,38 +166,47 @@ int main(int argc, char const *argv[])
 				)
 				{
 					final_candidate_pairs[g1->first].insert(*g2);
-					final_cand_pair_count++;
 				}
 			}
 		}
-		cout << "Banding Technique filter candidates pair count: " << banding_filter_count << endl;
-		cout << "Final candidates pair count: " << final_cand_pair_count << endl;
-
-		// Writing statistics to the stat file
-		stat_file.open("./"+res_dir+"/stat_file.txt",ios::app);
-		stat_file << "Banding Technique filter candidates pair count: " << banding_filter_count << endl;
-		stat_file << "Final candidates pair count: " << final_cand_pair_count << endl;
-		stat_file.close();
 		// Computing naive sequence similarity
-		computeSequenceSimilarity(graph_dataset, final_candidate_pairs, global_score_freq, simScore_threshold, res_dir);
+		computeSequenceSimilarity(graph_dataset, final_candidate_pairs, global_score_freq, simScore_threshold, g_res, simPairCount);
 	}	
 	else
 	{
 		// Computing naive sequence similarity
-		computeSequenceSimilarity(graph_dataset, candidate_pairs, global_score_freq, simScore_threshold, res_dir);
+		computeSequenceSimilarity(graph_dataset, candidate_pairs, global_score_freq, simScore_threshold, g_res, simPairCount);
 	}
-	cout << "Similarity Computation is done" << endl;
-
 	// timestamping end time
 	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();	
-
-	cout << "Memory used: " << memoryUsage() << " MB" << endl; // for displaying total memory usage (in MB)
-	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1)) << " milliseconds" << endl;
+	cout << "Similarity Computation is done" << endl;
 
 	// Writing statistics to the stat file
-	stat_file.open("./"+res_dir+"/stat_file.txt",ios::app);
+	stat_file.open("./"+res_dir+"/stat_final.txt", ios::app);
+
+	stat_file << "Loose Size Filter count: " << loose_filter_count << endl;
+	cout << "Loose size Filter count: " << loose_filter_count << endl;
+	if(choice > 1)
+	{
+		stat_file << "Common Vertex Filter count: " << strong_filter_count << endl;
+		cout << "Common Vertex Filter count: " << strong_filter_count << endl;
+	}
+	stat_file << "No. of Candidate Graphs: " << candidate_graph_count << endl << endl;
+	cout << "No. of Candidate Graphs: " << candidate_graph_count << endl << endl;
+	
+	if(choice == 3)
+	{
+		stat_file << "Banding Technique Filter count: " << banding_pair_count << endl;
+		cout << "Banding Technique Filter count: " << banding_pair_count << endl;
+	}
+	stat_file << "Similar Graphs: " << simPairCount << endl;
+	cout << "Similar Graphs: " << simPairCount << endl;
+
 	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	cout << "Memory used: " << memoryUsage() << " MB" << endl; // for displaying total memory usage (in MB)
 	stat_file << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
+	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1)) << " milliseconds" << endl;
+
 	stat_file.close();
 
 	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
@@ -205,6 +217,11 @@ int main(int argc, char const *argv[])
 	// for simScore==100
 	freq_file << "101 " << global_score_freq[101] << endl; 
 	freq_file.close();
+
+	ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");
+	for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
+		all_graph_file << g_iter->first.first << " " << g_iter->first.second << " " << g_iter->second << endl;
+	all_graph_file.close();
 
 	return 0;
 }
@@ -251,14 +268,11 @@ bool vertexComp2(Vertex &v1, Vertex &v2)
 }
 
 // final sequence similarity computation of pruned pairs
-void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &final_cand_pairs, vector<int> &global_score_freq, double simScore_threshold, string res_dir)
+void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, vector<int> &global_score_freq, double simScore_threshold, vector<pair<pair<unsigned, unsigned>, double>> &g_res, unsigned long long &simPairCount)
 {
-	unsigned long long simPairCount = 0;
-
-	ofstream all_graph_file("./" + res_dir + "/all_graph_pair.txt");
-	for(auto g1 = final_cand_pairs.begin(); g1 != final_cand_pairs.end(); g1++)
+	for(auto g1 = candidate_pairs.begin(); g1 != candidate_pairs.end(); g1++)
 	{
-		for(auto g2 = final_cand_pairs[g1->first].begin(); g2 != final_cand_pairs[g1->first].end(); g2++)
+		for(auto g2 = candidate_pairs[g1->first].begin(); g2 != candidate_pairs[g1->first].end(); g2++)
 		{
 			double simScore = computeSimilarity(graph_dataset[g1->first], graph_dataset[*g2]);
 			// Incrementing count... 
@@ -283,17 +297,10 @@ void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsig
 			if(simScore >= simScore_threshold)
 			{
 				simPairCount++;
-				all_graph_file << graph_dataset[g1->first].gid << " " << graph_dataset[*g2].gid << " " << simScore << endl;
+				g_res.push_back(make_pair(make_pair(graph_dataset[g1->first].gid, graph_dataset[*g2].gid), simScore));
 			}
 		}
 	}	
-	cout << "Similar Graphs: " << simPairCount << endl;
-	all_graph_file.close();
-
-	// Writing statistics to the stat file
-	ofstream stat_file("./"+res_dir+"/stat_file.txt",ios::app);
-	stat_file << "Similar Graphs: " << simPairCount << endl;
-	stat_file.close();
 }
 
 // graph comparator for sorting graph dataset

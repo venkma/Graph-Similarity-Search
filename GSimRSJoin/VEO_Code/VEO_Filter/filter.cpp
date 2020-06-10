@@ -145,12 +145,10 @@ int main(int argc, char const *argv[])
 	all_graph_file.close();
 	
 	// Result-set for each graph as vector of other graph's gid and their similarity score as double
-	vector<pair<unsigned, double>> g_res;
-	vector<unsigned long long int> g_time(graph_dataset_R.size());
+	vector<pair<pair<unsigned, unsigned>, double>> g_res;
 	unsigned long long int global_time = 0;
 
 	// Freq of simScore with range of 1% 0-1, 1-2, 1-3, ... 99-100% 
-	vector<int> score_freq(102, 0);
 	vector<long long int> global_score_freq(102, 0);
 
 	chrono::high_resolution_clock::time_point cl0 = chrono::high_resolution_clock::now();
@@ -213,13 +211,11 @@ int main(int argc, char const *argv[])
 					if(simScore==0.0)
 					{
 						// Disjoint graphs
-						score_freq[0]++;
 						global_score_freq[0]++;
 					}
 					else if(simScore==100.0)
 					{
 						// Identical graphs
-						score_freq[101]++;
 						global_score_freq[101]++;
 					}
 					else
@@ -227,10 +223,9 @@ int main(int argc, char const *argv[])
 						// example: 54.5% will be mapped to index 60
 						// example: 0.5% will be mapped to index 1
 						// example: 99.5% will be mapped to index 100
-						score_freq[(int)ceil(simScore)]++;
 						global_score_freq[(int)ceil(simScore)]++;
 					}
-					g_res.push_back(make_pair(graph_dataset_S[gS].gid, simScore));
+					g_res.push_back(make_pair(make_pair(graph_dataset_R[gR].gid, graph_dataset_S[gS].gid), simScore));
 					simPairCount++;
 				}
 			}
@@ -290,13 +285,11 @@ int main(int argc, char const *argv[])
 					if(simScore==0.0)
 					{
 						// Disjoint graphs
-						score_freq[0]++;
 						global_score_freq[0]++;
 					}
 					else if(simScore==100.0)
 					{
 						// Identical graphs
-						score_freq[101]++;
 						global_score_freq[101]++;
 					}
 					else
@@ -304,45 +297,15 @@ int main(int argc, char const *argv[])
 						// example: 54.5% will be mapped to index 60
 						// example: 0.5% will be mapped to index 1
 						// example: 99.5% will be mapped to index 100
-						score_freq[(int)ceil(simScore)]++;
 						global_score_freq[(int)ceil(simScore)]++;
 					}
 
-					g_res.push_back(make_pair(graph_dataset_S[gS].gid, simScore));
+					g_res.push_back(make_pair(make_pair(graph_dataset_R[gR].gid, graph_dataset_S[gS].gid), simScore));
 					simPairCount++;
 				}
 			}
 
 		}
-		gfile.open("./"+res_dir+"/graph_details/g_"+to_string(gR)+"_"+to_string(graph_dataset_R[gR].gid)+"_sim.txt");
-		all_graph_file.open("./"+res_dir+"/all_graph_file.txt",ios::app);
-	
-		// Writing the result-set for each graph to the file for each graph
-		gfile << g_res.size() << endl;
-		for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
-		{
-			all_graph_file << graph_dataset_R[gR].gid << " " << g_iter->first << " " << g_iter->second << endl;
-			gfile << graph_dataset_R[gR].gid << " " << g_iter->first << " " << g_iter->second << endl;
-		}
-		g_res.clear();
-		all_graph_file.close();
-
-		// Writing g1's simScore-freq
-
-		// for simScore==0
-		gfile << "0 " << score_freq[0] << endl;
-		score_freq[0] = 0;
-		for(int i=1; i<101; i++)
-		{
-			gfile << i << " " << score_freq[i] << endl;
-			score_freq[i] = 0;
-		}
-		// for simScore==100
-		gfile << "101 " << score_freq[101] << endl; 
-		score_freq[101] = 0;
-		gfile << g_time[gR] << endl;
-		gfile << global_time << endl;
-		gfile.close();
 
 	}	
 	chrono::high_resolution_clock::time_point cl1 = chrono::high_resolution_clock::now();	
@@ -404,6 +367,15 @@ int main(int argc, char const *argv[])
 	freq_file << "101 " << global_score_freq[101] << endl; 
 	freq_file.close();
 
+	// Writing the result-set for each graph pair to the all-graph-file
+
+	all_graph_file.open("./"+res_dir+"/all_graph_file.txt");	
+	for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
+	{
+		all_graph_file << g_iter->first.first << " " << g_iter->first.second << " " << g_iter->second << endl;
+	}
+	all_graph_file.close();
+	
 	return 0;
 }
 

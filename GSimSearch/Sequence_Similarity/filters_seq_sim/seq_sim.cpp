@@ -58,11 +58,8 @@ struct GraphComparator
 };
 
 // To apply Loose size and Strong size filter to input graph dataset
-void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_set<unsigned> &candidate_pairs, int dataset_size, int choice, double simScore_threshold, string res_dir)
+void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_set<unsigned> &candidate_pairs, int dataset_size, int choice, double simScore_threshold, long long &loose_filter_count, long long &strong_filter_count, long long &candidate_graph_count)
 {
-	// count of pruned graphs after each filter
-	long long loose_filter_count = 0, strong_filter_count = 0, candidate_graph_count = 0;
-
 	// Loose Size filter
 	simScore_threshold = simScore_threshold/100.0;
 
@@ -70,7 +67,7 @@ void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_se
 	
 	double num_shingles_qg = max(0,(int)query_graph.vertexCount - SHINGLESIZE + 1);
 
-	for(int g2 = qg_index - 1; g2 >= 0; g2--)
+	for(int g2 = qg_index; g2 >= 0; g2--)
 	{
 		// to ignore negative values: max(0,val)
 		double num_shingles_g2 = max(0,(int)graph_dataset[g2].vertexCount - SHINGLESIZE + 1);
@@ -94,12 +91,14 @@ void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_se
 					strong_filter_count++;
 					// Adding graph to pruned graph data structure
 					candidate_pairs.insert(g2);
+					candidate_graph_count++;
 				}
 			}
 			else
 			{
 				// Adding graph to pruned graph data structure
 				candidate_pairs.insert(g2);
+				candidate_graph_count++;
 			}
 		}
 		else
@@ -133,12 +132,14 @@ void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_se
 					strong_filter_count++;
 					// Adding graph to pruned graph data structure
 					candidate_pairs.insert(g2);
+					candidate_graph_count++;
 				}
 			}
 			else
 			{
 				// Adding graph to pruned graph data structure
 				candidate_pairs.insert(g2);
+				candidate_graph_count++;
 			}
 		}
 		else
@@ -148,17 +149,7 @@ void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_se
 		}
 	}
 	
-	// Writing statistics to the stat file
-	ofstream stat_file("./"+res_dir+"/stat_file.txt",ios::app);
-	stat_file << "Loose Size Filter count: " << loose_filter_count << endl;
-	cout << "Loose size filter candidate pair count: " << loose_filter_count << endl;
-	if(choice > 1)
-	{
-		stat_file << "Common Vertex Filter count: " << strong_filter_count << endl;
-		cout << "Common Vertex filter candidates pair count: " << strong_filter_count << endl;
-	}
-	cout << "No. of Candidate Graphs: " << candidate_pairs.size() << endl << endl;
-	stat_file.close();
+
 }
 
 // To Preprocess the pruned graph pairs 
@@ -178,7 +169,7 @@ void preProcess(vector<Graph> &graph_dataset, Graph &query_graph, unordered_set<
 }
 
 // To prune graphs using Banding Technique filter
-void bandingTech(vector<Graph> &graph_dataset, Graph &query_graph, unordered_set<unsigned> &candidate_pairs, unordered_set<unsigned> &banding_pairs, int BANDS, int ROWS)
+void bandingTech(vector<Graph> &graph_dataset, Graph &query_graph, unordered_set<unsigned> &candidate_pairs, unordered_set<unsigned> &banding_pairs, int BANDS, int ROWS, long long &banding_pair_count)
 {
 	unsigned hashVal;
 	for(int b = 0; b < BANDS; b++)
@@ -191,6 +182,7 @@ void bandingTech(vector<Graph> &graph_dataset, Graph &query_graph, unordered_set
 			{
 				if(hashVal == boost::hash_range(graph_dataset[*cand_graph_ind].minhashes.begin() + b*ROWS, graph_dataset[*cand_graph_ind].minhashes.begin() + (b+1)*ROWS))
 					banding_pairs.insert(*cand_graph_ind);
+					banding_pair_count++;
 			}
 		}
 	}

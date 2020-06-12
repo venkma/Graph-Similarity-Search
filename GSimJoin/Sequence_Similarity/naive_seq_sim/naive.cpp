@@ -23,50 +23,43 @@ int SHINGLESIZE;
 
 // $ ./naive inp-file pagerank-file SHINGLESIZE simScore_threshold dataset-size res-dir
 
-int main(int argc, char const *argv[])
+int printingresults(vector<Graph>& graph_dataset,int SHINGLESIZE,double simScore_threshold,const string res_dir,int dataset_size,unsigned long long int simPairCount,unsigned long long int global_time,vector<long long int>& global_score_freq,std::chrono::time_point<std::chrono::high_resolution_clock> cl0,std::chrono::time_point<std::chrono::high_resolution_clock> cl1)
 {
-	if(argc!=7)
-		usage();
+	cout << "GSimJoin: Sequence Similarity(naive)" << endl;
+	cout << "Dataset size: " << dataset_size << endl;
+	cout << "Shingle size: " << SHINGLESIZE << endl;
+	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
+	cout << "Similar Graph Pairs: " << simPairCount << endl;
+	cout << "Memory used: " << memoryUsage()  << " MB" << endl;
+	cout << "Similarity Time: "<< global_time << " milliseconds" << endl;
+	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1)) << " milliseconds" << endl;
+
+	// Writing statistics to the final stat file
+	ofstream stat_file("./"+res_dir+"/stat_file.txt");
+	stat_file << "GSimJoin: Sequence Similarity(naive)" << endl;
+	stat_file << "Dataset size: " << dataset_size << endl;
+	stat_file << "Shingle size: " << SHINGLESIZE << endl;
+	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
+	stat_file << "Similar Graph Pairs: " << simPairCount << endl;
+	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file << "Similarity Time: "<< global_time << " milliseconds" << endl;
+	stat_file << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
+	stat_file.close();
 	
-	SHINGLESIZE = stoi(argv[3]); // size of each shingle
-	double simScore_threshold = stod(argv[4]); // threshold to write only those graph pairs to all_graph_file.txt
-	int dataset_size = stoi(argv[5]); // dataset-size
-	const string res_dir = argv[6]; // directory in which all stat files would be stored
-	mkdir(res_dir.c_str(),0777);
-	mkdir((res_dir+"/graph_details/").c_str(),0777);
-	vector<Graph> graph_dataset; // Input graph dataset
+	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
+	// for simScore==0
+	freq_file << "0 " << global_score_freq[0] << endl; 
+	for(int i=1; i<101; i++)
+		freq_file << i << " " << global_score_freq[i] << endl;
+	// for simScore==100
+	freq_file << "101 " << global_score_freq[101] << endl; 
+	freq_file.close();
+}
 
-	ifstream dataset_file(argv[1]);
-	if(!dataset_file.is_open())
-	{
-		cerr << "Unable to open the dataset file." << endl;
-		exit(0);
-	}
-	parseGraphDataset(dataset_file, graph_dataset, dataset_size); // dataset parsed	
-	cout << "Parsing graph-dataset successfull." << endl; 
-
-	ifstream pagerank_file(argv[2]);	
-	if(!pagerank_file.is_open())
-	{
-		cerr << "Unable to open the pagerank file." << endl;
-		exit(0);
-	}
-	// pageranks must be stored in same order of graphs as the input graph dataset file
-	loadPageRanks(pagerank_file, graph_dataset, dataset_size); 
-	cout<<"PageRank Loaded successfull."<<endl;
-
- 	// timestamping start time
-	chrono::high_resolution_clock::time_point cl0 = chrono::high_resolution_clock::now();
-
-	// Preprocessing the graph dataset
-	for(int graph_ind=0; graph_ind < graph_dataset.size(); graph_ind++)
-	{
-		graph_dataset[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
-		graph_dataset[graph_ind].walkAlgorithm(); // generate random walk of graph
-		graph_dataset[graph_ind].computeShingles(); // compute shingles
-	}
-
-	double simScore; // similarity score
+int simscoreComputation(vector<Graph>& graph_dataset,int SHINGLESIZE,double simScore_threshold,const string res_dir,int dataset_size,std::chrono::time_point<std::chrono::high_resolution_clock> cl0)
+{
+	 
+    	double simScore; // similarity score
 	unsigned long long int simPairCount = 0; // no. of graph pairs having similarity score > threshold
 
 	ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");
@@ -161,40 +154,62 @@ int main(int argc, char const *argv[])
 
 	}
  	// timestamping end time
-	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();	
+	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();
 
-	cout << "GSimJoin: Sequence Similarity(naive)" << endl;
-	cout << "Dataset size: " << dataset_size << endl;
-	cout << "Shingle size: " << SHINGLESIZE << endl;
-	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
-	cout << "Similar Graph Pairs: " << simPairCount << endl;
-	cout << "Memory used: " << memoryUsage()  << " MB" << endl;
-	cout << "Similarity Time: "<< global_time << " milliseconds" << endl;
-	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1)) << " milliseconds" << endl;
+	printingresults(graph_dataset,SHINGLESIZE,simScore_threshold,res_dir,dataset_size,simPairCount,global_time,global_score_freq,cl0,cl1);
+        
+	return 0;		
 
-	// Writing statistics to the final stat file
-	ofstream stat_file("./"+res_dir+"/stat_file.txt");
-	stat_file << "GSimJoin: Sequence Similarity(naive)" << endl;
-	stat_file << "Dataset size: " << dataset_size << endl;
-	stat_file << "Shingle size: " << SHINGLESIZE << endl;
-	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
-	stat_file << "Similar Graph Pairs: " << simPairCount << endl;
-	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
-	stat_file << "Similarity Time: "<< global_time << " milliseconds" << endl;
-	stat_file << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
-	stat_file.close();
-	
-	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
-	// for simScore==0
-	freq_file << "0 " << global_score_freq[0] << endl; 
-	for(int i=1; i<101; i++)
-		freq_file << i << " " << global_score_freq[i] << endl;
-	// for simScore==100
-	freq_file << "101 " << global_score_freq[101] << endl; 
-	freq_file.close();
-
-	return 0;
 }
+
+int main(int argc, char const *argv[])
+{
+	if(argc!=7)
+		usage();
+	
+	SHINGLESIZE = stoi(argv[3]); // size of each shingle
+	double simScore_threshold = stod(argv[4]); // threshold to write only those graph pairs to all_graph_file.txt
+	int dataset_size = stoi(argv[5]); // dataset-size
+	const string res_dir = argv[6]; // directory in which all stat files would be stored
+	mkdir(res_dir.c_str(),0777);
+	mkdir((res_dir+"/graph_details/").c_str(),0777);
+	vector<Graph> graph_dataset; // Input graph dataset
+
+	ifstream dataset_file(argv[1]);
+	if(!dataset_file.is_open())
+	{
+		cerr << "Unable to open the dataset file." << endl;
+		exit(0);
+	}
+	parseGraphDataset(dataset_file, graph_dataset, dataset_size); // dataset parsed	
+	cout << "Parsing graph-dataset successfull." << endl; 
+
+	ifstream pagerank_file(argv[2]);	
+	if(!pagerank_file.is_open())
+	{
+		cerr << "Unable to open the pagerank file." << endl;
+		exit(0);
+	}
+	// pageranks must be stored in same order of graphs as the input graph dataset file
+	loadPageRanks(pagerank_file, graph_dataset, dataset_size); 
+	cout<<"PageRank Loaded successfull."<<endl;
+
+ 	// timestamping start time
+	chrono::high_resolution_clock::time_point cl0 = chrono::high_resolution_clock::now();
+
+	// Preprocessing the graph dataset
+	for(int graph_ind=0; graph_ind < graph_dataset.size(); graph_ind++)
+	{
+		graph_dataset[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
+		graph_dataset[graph_ind].walkAlgorithm(); // generate random walk of graph
+		graph_dataset[graph_ind].computeShingles(); // compute shingles
+	}
+
+        simscoreComputation(graph_dataset,SHINGLESIZE,simScore_threshold,res_dir,dataset_size,cl0);
+        return 0;
+}
+
+
 
 // prints correct usage of program in case of an error
 void usage()

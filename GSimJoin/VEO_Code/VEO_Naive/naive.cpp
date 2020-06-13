@@ -19,6 +19,74 @@ void usage();
 
 // $ ./naive inp-file simScore_threshold dataset-size res-file
 
+
+vector<pair<unsigned, double>> creatingResultGraphsandUpdatingGRES(const string res_dir,int g1,vector<Graph> &graph_dataset,vector<pair<unsigned, double>> &g_res,vector<int> &score_freq,vector<unsigned long long int> &g_time,unsigned long long int global_time)
+{
+		// Creating Result Files for graph g1
+		ofstream gfile;
+		ofstream all_graph_file;
+		all_graph_file.open("./"+res_dir+"/all_graph_file.txt",ios::app);
+		gfile.open("./"+res_dir+"/graph_details/g_"+to_string(g1)+"_"+to_string(graph_dataset[g1].gid)+"_sim.txt");
+
+		// Writing the result-set for each graph to the file for each graph
+		gfile << g_res.size() << endl;
+		for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
+		{
+			gfile << graph_dataset[g1].gid << " " << g_iter->first << " " << g_iter->second << endl;
+			all_graph_file << graph_dataset[g1].gid << " " << g_iter->first << " " << g_iter->second << endl;
+		}
+		g_res.clear();
+		all_graph_file.close();
+
+		// Writing g1's simScore-freq
+		// for simScore==0
+		gfile << "0 " << score_freq[0] << endl;
+		score_freq[0] = 0;
+		for(int i=1; i<101; i++)
+		{
+			gfile << i << " " << score_freq[i] << endl;
+			score_freq[i] = 0;
+		}
+		// for simScore==100
+		gfile << "101 " << score_freq[101] << endl; 
+		score_freq[101] = 0;
+		gfile << g_time[g1] << endl;
+		gfile << global_time << endl;
+		gfile.close();
+		
+		return g_res;
+}
+
+void printingAndWritingFinalStatistics(int dataset_size,double simScore_threshold,unsigned long long int simPairCount,unsigned long long int global_time,unsigned long long int totalTimeTaken,const string res_dir,vector<long long int> &global_score_freq)
+{
+    cout << "GSimJoin: VEO Similarity(naive)" << endl;
+	cout << "Dataset size: " << dataset_size << endl;
+	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
+	cout << "Similar Graph Pairs: " << simPairCount << endl;
+	cout << "Memory used: " << memoryUsage() << " MB" << endl;
+	cout << "Similarity Time: "<< global_time << " milliseconds" << endl;
+	cout << "Total Time Taken: "<< totalTimeTaken  << " milliseconds" << endl;
+
+	ofstream stat_file("./"+res_dir+"/stat_final.txt");
+	stat_file << "GSimJoin: VEO Similarity(naive)" << endl;
+	stat_file << "Dataset size: " << dataset_size << endl;
+	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
+	stat_file << "Similar Graph Pairs: " << simPairCount << endl;
+	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file << "Similarity Time: "<< global_time << " milliseconds" << endl;
+	stat_file << "Total Time Taken: "<< totalTimeTaken  << " milliseconds" << endl;
+	stat_file.close();
+	
+	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
+	// for simScore==0
+	freq_file << "0 " << global_score_freq[0] << endl; 
+	for(int i=1; i<101; i++)
+		freq_file << i << " " << global_score_freq[i] << endl;
+	// for simScore==100
+	freq_file << "101 " << global_score_freq[101] << endl; 
+	freq_file.close();
+}
+
 int main(int argc, char const *argv[])
 {
 	if(argc!=5)
@@ -108,68 +176,15 @@ int main(int argc, char const *argv[])
 		clTemp1 = chrono::high_resolution_clock::now();
 		g_time[g1] = clocksTosec(clTemp0,clTemp1); // graph's similarity calculation time
 		global_time += g_time[g1]; // dataset's similarity calculation time
-
-		// Creating Result Files for graph g1
-		ofstream gfile;
-		all_graph_file.open("./"+res_dir+"/all_graph_file.txt",ios::app);
-		gfile.open("./"+res_dir+"/graph_details/g_"+to_string(g1)+"_"+to_string(graph_dataset[g1].gid)+"_sim.txt");
-
-		// Writing the result-set for each graph to the file for each graph
-		gfile << g_res.size() << endl;
-		for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
-		{
-			gfile << graph_dataset[g1].gid << " " << g_iter->first << " " << g_iter->second << endl;
-			all_graph_file << graph_dataset[g1].gid << " " << g_iter->first << " " << g_iter->second << endl;
-		}
-		g_res.clear();
-		all_graph_file.close();
-
-		// Writing g1's simScore-freq
-		// for simScore==0
-		gfile << "0 " << score_freq[0] << endl;
-		score_freq[0] = 0;
-		for(int i=1; i<101; i++)
-		{
-			gfile << i << " " << score_freq[i] << endl;
-			score_freq[i] = 0;
-		}
-		// for simScore==100
-		gfile << "101 " << score_freq[101] << endl; 
-		score_freq[101] = 0;
-		gfile << g_time[g1] << endl;
-		gfile << global_time << endl;
-		gfile.close();
+		
+             g_res = creatingResultGraphsandUpdatingGRES(res_dir,g1,graph_dataset,g_res,score_freq,g_time,global_time);
 	}
  	// timestamping end time
-	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();	
+	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();
+	unsigned long long int totalTimeTaken = (clocksTosec(cl0,cl1));
 	
-	cout << "GSimJoin: VEO Similarity(naive)" << endl;
-	cout << "Dataset size: " << dataset_size << endl;
-	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
-	cout << "Similar Graph Pairs: " << simPairCount << endl;
-	cout << "Memory used: " << memoryUsage() << " MB" << endl;
-	cout << "Similarity Time: "<< global_time << " milliseconds" << endl;
-	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
-
-	ofstream stat_file("./"+res_dir+"/stat_final.txt");
-	stat_file << "GSimJoin: VEO Similarity(naive)" << endl;
-	stat_file << "Dataset size: " << dataset_size << endl;
-	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
-	stat_file << "Similar Graph Pairs: " << simPairCount << endl;
-	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
-	stat_file << "Similarity Time: "<< global_time << " milliseconds" << endl;
-	stat_file << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
-	stat_file.close();
-	
-	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
-	// for simScore==0
-	freq_file << "0 " << global_score_freq[0] << endl; 
-	for(int i=1; i<101; i++)
-		freq_file << i << " " << global_score_freq[i] << endl;
-	// for simScore==100
-	freq_file << "101 " << global_score_freq[101] << endl; 
-	freq_file.close();
-
+    printingAndWritingFinalStatistics(dataset_size,simScore_threshold,simPairCount,global_time,totalTimeTaken,res_dir,global_score_freq);
+    
 	return 0;
 }
 

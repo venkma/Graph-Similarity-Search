@@ -11,7 +11,7 @@ void loadPageRanks(ifstream &pagerank_file, vector<Graph> &graph_dataset, int &d
 bool vertexComp2(Vertex &v1, Vertex &v2);
 
 // final sequence similarity computation of pruned pairs
-void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, vector<int> &global_score_freq, double simScore_threshold, vector<pair<pair<unsigned, unsigned>, double>> &g_res, unsigned long long &simPairCount);
+void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, vector<int> &global_score_freq, double simScore_threshold, string res_dir);
 
 // graph comparator for sorting graph dataset
 bool graphComp(Graph &g1, Graph &g2);
@@ -31,7 +31,115 @@ int SHINGLESIZE;
 
 // $ ./filter inp_file pagerank_file SHINGLESIZE choice simScore_threshold [BANDS] [ROWS] dataset-size res-dir
 //                                                           			   |____________|
-//							                        			            for choice 3
+// for choice 3
+
+unordered_map<unsigned, unordered_set<unsigned> > computeFinalCandidatePairs(unordered_map<unsigned, unordered_set<unsigned> > &banding_pairs,unordered_map<unsigned, unordered_set<unsigned> > &final_candidate_pairs,unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs,const string res_dir)
+{
+    unsigned long long banding_filter_count = 0, final_cand_pair_count = 0;
+		// Performs intersection between pruned graphs (after filter 1 & 2) with pruned graphs (after filter 3)
+		for(auto g1 = banding_pairs.begin(); g1 != banding_pairs.end(); g1++)
+		{
+			for(auto g2 = banding_pairs[g1->first].begin(); g2 != g1->second.end(); g2++)
+			{
+				banding_filter_count++;
+				if( 
+					(
+						candidate_pairs.find(g1->first)!=candidate_pairs.end() 
+						&& 
+						candidate_pairs[g1->first].find(*g2)!=candidate_pairs[g1->first].end()
+					) 
+						|| 
+					(
+						candidate_pairs.find(*g2)!=candidate_pairs.end() 
+						&& 
+						candidate_pairs[*g2].find(g1->first)!=candidate_pairs[*g2].end()
+					)
+				)
+				{
+					final_candidate_pairs[g1->first].insert(*g2);
+					final_cand_pair_count++;
+				}
+			}
+		}
+		cout << "Banding Technique filter candidates pair count: " << banding_filter_count << endl;
+		cout << "Final candidates pair count: " << final_cand_pair_count << endl;
+
+		// Writing statistics to the stat file
+		ofstream stat_file("./"+res_dir+"/stat_file.txt");
+		stat_file.open("./"+res_dir+"/stat_file.txt",ios::app);
+		stat_file << "Banding Technique filter candidates pair count: " << banding_filter_count << endl;
+		stat_file << "Final candidates pair count: " << final_cand_pair_count << endl;
+		stat_file.close();
+		
+		return final_candidate_pairs;
+}
+
+
+vector<int> printingAndWritingInitialStatistics(int dataset_size,int SHINGLESIZE,int choice,double simScore_threshold,const char* path,const string res_dir,const char* bandspath,const char* rowspath)
+{
+    cout << "GSimJoin: Sequence Similarity(filters)" << endl;
+	cout << "Dataset size: " << dataset_size << endl;
+	cout << "Shingle Size: " << SHINGLESIZE << endl;
+	cout << "Choice of filter: " << choice << endl;
+	cout << "Threshold: " << simScore_threshold << endl;
+	cout << "Input file: " << path <<endl;
+	cout << "Results Directory: " << res_dir <<endl;
+
+	// Writing statistics to the stat file
+	ofstream stat_file("./"+res_dir+"/stat_file.txt");
+	stat_file.open("./"+res_dir+"/stat_file.txt",ios::app);
+	stat_file << "GSimJoin: Sequence Similarity(filters)" << endl;
+	stat_file << "Dataset size: " << dataset_size << endl;
+	stat_file << "Shingle size: " << SHINGLESIZE << endl;
+	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
+	stat_file << "Filter choice: " << choice << endl;
+       stat_file.close();
+
+
+        int BANDS,ROWS;
+	if(choice == 3)
+	{
+		BANDS = stoi(bandspath);
+		ROWS = stoi(rowspath);
+		cout << "Bands: " << BANDS <<endl;
+		cout << "Rows: " << ROWS <<endl;
+		ofstream stat_file("./"+res_dir+"/stat_file.txt");
+	        stat_file.open("./"+res_dir+"/stat_file.txt",ios::app);
+		stat_file << "No. of Bands: " << BANDS << endl;
+		stat_file << "No. of Rows: " << ROWS << endl;
+		stat_file.close();
+	}
+
+     vector<int> v;
+     v.push_back(BANDS);
+     v.push_back(ROWS);
+
+     return v; 
+
+}
+
+
+void printingAndWritingFinalStatistics(const string res_dir,int timetaken,vector<int>& global_score_freq)
+{
+    cout << "Memory used: " << memoryUsage() << " MB" << endl; // for displaying total memory usage (in MB)
+	cout << "Total Time Taken: "<< timetaken << " milliseconds" << endl;
+    
+	// Writing statistics to the stat file
+	ofstream stat_file("./"+res_dir+"/stat_file.txt");
+	stat_file.open("./"+res_dir+"/stat_file.txt",ios::app);
+	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file << "Total Time Taken: "<< timetaken  << " milliseconds" << endl;
+	stat_file.close();
+	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
+	// for simScore==0
+	freq_file << "0 " << global_score_freq[0] << endl; 
+	for(int i=1; i<101; i++)
+		freq_file << i << " " << global_score_freq[i] << endl;
+	// for simScore==100
+	freq_file << "101 " << global_score_freq[101] << endl; 
+	freq_file.close();
+
+}
 
 int main(int argc, char const *argv[])
 {
@@ -54,42 +162,17 @@ int main(int argc, char const *argv[])
 	const string res_dir = argv[argc-1]; // directory in which all stat files would be stored
 	mkdir(res_dir.c_str(),0777);
 	vector<Graph> graph_dataset; // Input graph dataset
-	unsigned long long simPairCount = 0; // count of allsimilar pairs
-	long long loose_filter_count = 0, strong_filter_count = 0, candidate_graph_count = 0, banding_pair_count = 0; // count of pruned graphs after each filter
-	vector<pair<pair<unsigned, unsigned>, double>> g_res; // stores all the similar graphs 
 
 	vector<bool> candidate_graphs; // pruned graphs
 	unordered_map<unsigned, unordered_set<unsigned> > candidate_pairs; // candidate pairs after filters 1 & 2
 	unordered_map<unsigned, unordered_set<unsigned> > banding_pairs; // candidate pairs after banding technique
 	unordered_map<unsigned, unordered_set<unsigned> > final_candidate_pairs; // final candidate pairs from filters
-
-	cout << "GSimJoin: Sequence Similarity(filters)" << endl;
-	cout << "Dataset size: " << dataset_size << endl;
-	cout << "Shingle Size: " << SHINGLESIZE << endl;
-	cout << "Choice of filter: " << choice << endl;
-	cout << "Threshold: " << simScore_threshold << endl;
-	cout << "Input file: " << argv[1] <<endl;
-	cout << "Results Directory: " << res_dir <<endl;
-
-	// Writing statistics to the stat file
-	ofstream stat_file("./"+res_dir+"/stat_file.txt");
-	stat_file << "GSimJoin: Sequence Similarity(filters)" << endl;
-	stat_file << "Dataset size: " << dataset_size << endl;
-	stat_file << "Shingle size: " << SHINGLESIZE << endl;
-	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
-	stat_file << "Filter choice: " << choice << endl;
-
-	int BANDS,ROWS;
-	if(choice == 3)
-	{
-		BANDS = stoi(argv[6]);
-		ROWS = stoi(argv[7]);
-		cout << "Bands: " << BANDS <<endl;
-		cout << "Rows: " << ROWS <<endl;
-		stat_file << "No. of Bands: " << BANDS << endl;
-		stat_file << "No. of Rows: " << ROWS << endl;
-	}
-	stat_file.close();
+	unordered_map<unsigned, unordered_set<unsigned> > final_our_candidate_pairs;
+	
+	vector<int> v1 = printingAndWritingInitialStatistics(dataset_size,SHINGLESIZE,choice,simScore_threshold,argv[1],res_dir,argv[6],argv[7]);
+    
+        int BANDS = v1[0];
+        int ROWS  = v1[1];
 
 	ifstream dataset_file(argv[1]);
 	if(!dataset_file.is_open())
@@ -127,13 +210,13 @@ int main(int argc, char const *argv[])
 	chrono::high_resolution_clock::time_point cl0 = chrono::high_resolution_clock::now();
 	
 	// Applies Loose size and Strong size filter to input graph dataset
-	applyFilters(graph_dataset, candidate_graphs, candidate_pairs, dataset_size, choice, simScore_threshold, loose_filter_count, strong_filter_count, candidate_graph_count);
+	applyFilters(graph_dataset, candidate_graphs, candidate_pairs, dataset_size, choice, simScore_threshold, res_dir);
 	cout << "Loose-size and Common-vertex Filters are done." <<endl;
 
 	// Preprocesses the pruned graph pairs 
 	preProcess(graph_dataset, candidate_graphs); 
 	cout<<"Preprocessing is done."<<endl;
-
+	
 	// Freq of simScore with range of 1% 0-1, 1-2, 1-3, ... 99-100% 
 	vector<int> global_score_freq(102, 0);
 			
@@ -143,86 +226,26 @@ int main(int argc, char const *argv[])
 		// Applies filter using Banding Technique
 		bandingTech(graph_dataset, candidate_graphs, banding_pairs, BANDS, ROWS);
 		cout<<"Banding Technique filter is done." <<endl;
-
-		long long banding_pair_count = 0;
-		// Performs intersection between pruned graphs (after filter 1 & 2) with pruned graphs (after filter 3)
-		for(auto g1 = banding_pairs.begin(); g1 != banding_pairs.end(); g1++)
-		{
-			for(auto g2 = banding_pairs[g1->first].begin(); g2 != g1->second.end(); g2++)
-			{
-				banding_pair_count++;
-				if( 
-					(
-						candidate_pairs.find(g1->first)!=candidate_pairs.end() 
-						&& 
-						candidate_pairs[g1->first].find(*g2)!=candidate_pairs[g1->first].end()
-					) 
-						|| 
-					(
-						candidate_pairs.find(*g2)!=candidate_pairs.end() 
-						&& 
-						candidate_pairs[*g2].find(g1->first)!=candidate_pairs[*g2].end()
-					)
-				)
-				{
-					final_candidate_pairs[g1->first].insert(*g2);
-				}
-			}
-		}
+        
+		//final_candidate_pairs obtained after the execution of below function will be the final candidate_pairs we need for computing SequenceSimilarity
+		final_our_candidate_pairs = computeFinalCandidatePairs(banding_pairs, final_candidate_pairs, candidate_pairs,res_dir);
+		
 		// Computing naive sequence similarity
-		computeSequenceSimilarity(graph_dataset, final_candidate_pairs, global_score_freq, simScore_threshold, g_res, simPairCount);
+		computeSequenceSimilarity(graph_dataset, final_our_candidate_pairs, global_score_freq, simScore_threshold, res_dir);
 	}	
 	else
 	{
 		// Computing naive sequence similarity
-		computeSequenceSimilarity(graph_dataset, candidate_pairs, global_score_freq, simScore_threshold, g_res, simPairCount);
+		computeSequenceSimilarity(graph_dataset, candidate_pairs, global_score_freq, simScore_threshold, res_dir);
 	}
-	// timestamping end time
-	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();	
 	cout << "Similarity Computation is done" << endl;
 
-	// Writing statistics to the stat file
-	stat_file.open("./"+res_dir+"/stat_final.txt", ios::app);
-
-	stat_file << "Loose Size Filter count: " << loose_filter_count << endl;
-	cout << "Loose size Filter count: " << loose_filter_count << endl;
-	if(choice > 1)
-	{
-		stat_file << "Common Vertex Filter count: " << strong_filter_count << endl;
-		cout << "Common Vertex Filter count: " << strong_filter_count << endl;
-	}
-	stat_file << "No. of Candidate Graphs: " << candidate_graph_count << endl << endl;
-	cout << "No. of Candidate Graphs: " << candidate_graph_count << endl << endl;
-	
-	if(choice == 3)
-	{
-		stat_file << "Banding Technique Filter count: " << banding_pair_count << endl;
-		cout << "Banding Technique Filter count: " << banding_pair_count << endl;
-	}
-	stat_file << "Similar Graphs: " << simPairCount << endl;
-	cout << "Similar Graphs: " << simPairCount << endl;
-
-	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
-	cout << "Memory used: " << memoryUsage() << " MB" << endl; // for displaying total memory usage (in MB)
-	stat_file << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
-	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1)) << " milliseconds" << endl;
-
-	stat_file.close();
-
-	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
-	// for simScore==0
-	freq_file << "0 " << global_score_freq[0] << endl; 
-	for(int i=1; i<101; i++)
-		freq_file << i << " " << global_score_freq[i] << endl;
-	// for simScore==100
-	freq_file << "101 " << global_score_freq[101] << endl; 
-	freq_file.close();
-
-	ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");
-	for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
-		all_graph_file << g_iter->first.first << " " << g_iter->first.second << " " << g_iter->second << endl;
-	all_graph_file.close();
-
+	// timestamping end time
+	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();	
+        int timetaken = (clocksTosec(cl0,cl1));
+    
+    printingAndWritingFinalStatistics(res_dir,timetaken,global_score_freq);
+    
 	return 0;
 }
 
@@ -268,11 +291,14 @@ bool vertexComp2(Vertex &v1, Vertex &v2)
 }
 
 // final sequence similarity computation of pruned pairs
-void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &candidate_pairs, vector<int> &global_score_freq, double simScore_threshold, vector<pair<pair<unsigned, unsigned>, double>> &g_res, unsigned long long &simPairCount)
+void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsigned, unordered_set<unsigned> > &final_cand_pairs, vector<int> &global_score_freq, double simScore_threshold, string res_dir)
 {
-	for(auto g1 = candidate_pairs.begin(); g1 != candidate_pairs.end(); g1++)
+	unsigned long long simPairCount = 0;
+
+	ofstream all_graph_file("./" + res_dir + "/all_graph_pair.txt");
+	for(auto g1 = final_cand_pairs.begin(); g1 != final_cand_pairs.end(); g1++)
 	{
-		for(auto g2 = candidate_pairs[g1->first].begin(); g2 != candidate_pairs[g1->first].end(); g2++)
+		for(auto g2 = final_cand_pairs[g1->first].begin(); g2 != final_cand_pairs[g1->first].end(); g2++)
 		{
 			double simScore = computeSimilarity(graph_dataset[g1->first], graph_dataset[*g2]);
 			// Incrementing count... 
@@ -297,10 +323,17 @@ void computeSequenceSimilarity(vector<Graph> &graph_dataset, unordered_map<unsig
 			if(simScore >= simScore_threshold)
 			{
 				simPairCount++;
-				g_res.push_back(make_pair(make_pair(graph_dataset[g1->first].gid, graph_dataset[*g2].gid), simScore));
+				all_graph_file << graph_dataset[g1->first].gid << " " << graph_dataset[*g2].gid << " " << simScore << endl;
 			}
 		}
 	}	
+	cout << "Similar Graphs: " << simPairCount << endl;
+	all_graph_file.close();
+
+	// Writing statistics to the stat file
+	ofstream stat_file("./"+res_dir+"/stat_file.txt",ios::app);
+	stat_file << "Similar Graphs: " << simPairCount << endl;
+	stat_file.close();
 }
 
 // graph comparator for sorting graph dataset

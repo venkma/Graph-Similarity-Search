@@ -26,6 +26,101 @@ void usage();
 // static:  ./filter inp_file 3 simScore_threshold mismatch noofbuckets dataset-size res-file
 // dynamic: ./filter inp_file 4 simScore_threshold mismatch noofbuckets dataset-size res-file
 
+
+void printingAndWritingInitialStatistics(int choice,double simScore_threshold,int dataset_size,const string res_dir,bool mismatch,int no_of_buckets)
+{
+	cout << "GSimJoin: VEO Similarity(filters)" << endl;
+	cout << "Choice: " << choice << endl;
+	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
+	cout << "Dataset Size: " << dataset_size << endl;
+
+	ofstream stat_file(res_dir+"/stat_file.txt");
+	stat_file << "GSimJoin: VEO Similarity(filters)" << endl;
+	stat_file << "Choice: " << choice << endl;
+	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
+	stat_file << "Dataset Size: " << dataset_size << endl;
+	if(choice >= 2)
+	{
+		cout << "Mismatch: " << mismatch << endl;
+		cout << "No of Buckets: " << no_of_buckets << endl;
+		stat_file << "Mismatch: " << mismatch << endl;
+		stat_file << "No of Buckets: " << no_of_buckets << endl;
+	}
+	stat_file.close();
+}
+void printingAndWritingFinalStatistics(int choice,unsigned long looseCount,unsigned long strictCount,unsigned long staticCount,bool isBucket,unsigned long partitionCount,unsigned long dynamicCount,bool mismatch,unsigned long mismatchCount,unsigned long simPairCount,int totalTimeTaken,const string res_dir,vector<long long int>& global_score_freq,unordered_map<unsigned, vector<pair<unsigned, double>>>& g_res)
+{
+    // Displaying stat file...
+	if(choice >= 1)
+		cout << "Loose Filter Count: " << looseCount << endl;
+	if(choice >= 2)
+		cout << "Strict Filter Count: " << strictCount << endl;
+	if(choice == 3)
+	{
+		cout << "Static Filter Count: " << staticCount << endl;
+		if(isBucket)
+			cout << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(choice == 4)
+	{
+		cout << "Dynamic Filter Count: " << dynamicCount << endl;
+		if(isBucket)
+			cout << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(mismatch)
+		cout << "Mismatch Filter Count: " << mismatchCount << endl;
+	cout << "Final Similar Pair Count: " << simPairCount << endl;
+	cout << "Memory used: " << memoryUsage() << " MB" << endl;
+	cout <<"Total Time Taken: "<< totalTimeTaken << " milliseconds" << endl;
+        
+        ofstream stat_file(res_dir+"/stat_file.txt");
+	stat_file.open(res_dir+"/stat_file.txt", ios::app);
+	// Writing counts to stat file
+	if(choice >= 1)
+		stat_file << "Loose Filter Count: " << looseCount << endl;
+	if(choice >= 2)
+		stat_file << "Strict Filter Count: " << strictCount << endl;
+	if(choice == 3)
+	{
+		stat_file << "Static Filter Count: " << staticCount << endl;
+		if(isBucket)
+			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(choice == 4)
+	{
+		stat_file << "Dynamic Filter Count: " << dynamicCount << endl;
+		if(isBucket)
+			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(mismatch)
+		stat_file << "Mismatch Filter Count: " << mismatchCount << endl;
+	stat_file << "Final Similar Pair Count: " << simPairCount << endl;
+
+	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file <<"Total Time Taken: "<< totalTimeTaken << " milliseconds" << endl;
+	stat_file.close();
+	
+	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
+	// for simScore==0
+	freq_file << "0 " << global_score_freq[0] << endl; 
+	for(int i=1; i<101; i++)
+		freq_file << i << " " << global_score_freq[i] << endl;
+	// for simScore==100
+	freq_file << "101 " << global_score_freq[101] << endl; 
+	freq_file.close();
+
+	ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");	
+	// Writing the result-set for each graph to the file for each graph
+	for(auto g1 = g_res.begin(); g1 != g_res.end(); g1++)
+	{
+		for(auto g2 = g_res[g1->first].begin(); g2 != g_res[g1->first].end(); g2++)
+		{
+			all_graph_file << g1->first << " " << g2->first << " " << g2->second << endl;
+		}
+	}
+	all_graph_file.close();
+
+}
 int main(int argc, char const *argv[])
 {
 	if(argc<6)
@@ -95,26 +190,10 @@ int main(int argc, char const *argv[])
 	unsigned long simPairCount = 0; // No. of graph pairs having similarity score > threshold
 	bool out = false; // a flag used to indicate whether graph is pruned or not 
 	double simScore; // similarity score 
-
-	cout << "GSimJoin: VEO Similarity(filters)" << endl;
-	cout << "Choice: " << choice << endl;
-	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
-	cout << "Dataset Size: " << dataset_size << endl;
-
-	ofstream stat_file(res_dir+"/stat_file.txt");
-	stat_file << "GSimJoin: VEO Similarity(filters)" << endl;
-	stat_file << "Choice: " << choice << endl;
-	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
-	stat_file << "Dataset Size: " << dataset_size << endl;
 	
-	if(choice >= 2)
-	{
-		cout << "Mismatch: " << mismatch << endl;
-		cout << "No of Buckets: " << no_of_buckets << endl;
-		stat_file << "Mismatch: " << mismatch << endl;
-		stat_file << "No of Buckets: " << no_of_buckets << endl;
-	}
-	stat_file.close();
+	printingAndWritingInitialStatistics(choice,simScore_threshold,dataset_size,res_dir,mismatch,no_of_buckets);
+	
+	
 
 	VEO veo_sim = VEO(simScore_threshold);
 
@@ -207,77 +286,11 @@ int main(int argc, char const *argv[])
 	}
 
  	// timestamping end time
-	chrono::high_resolution_clock::time_point cl2 = chrono::high_resolution_clock::now();	
+	chrono::high_resolution_clock::time_point cl2 = chrono::high_resolution_clock::now();
+	int totalTimeTaken = (clocksTosec(cl0,cl2));
 
-	// Displaying stat file...
-	if(choice >= 1)
-		cout << "Loose Filter Count: " << looseCount << endl;
-	if(choice >= 2)
-		cout << "Strict Filter Count: " << strictCount << endl;
-	if(choice == 3)
-	{
-		cout << "Static Filter Count: " << staticCount << endl;
-		if(isBucket)
-			cout << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(choice == 4)
-	{
-		cout << "Dynamic Filter Count: " << dynamicCount << endl;
-		if(isBucket)
-			cout << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(mismatch)
-		cout << "Mismatch Filter Count: " << mismatchCount << endl;
-	cout << "Final Similar Pair Count: " << simPairCount << endl;
-	cout << "Memory used: " << memoryUsage() << " MB" << endl;
-	cout <<"Total Time Taken: "<< (clocksTosec(cl0,cl2)) << " milliseconds" << endl;
-
-	stat_file.open(res_dir+"/stat_file.txt", ios::app);
-	// Writing counts to stat file
-	if(choice >= 1)
-		stat_file << "Loose Filter Count: " << looseCount << endl;
-	if(choice >= 2)
-		stat_file << "Strict Filter Count: " << strictCount << endl;
-	if(choice == 3)
-	{
-		stat_file << "Static Filter Count: " << staticCount << endl;
-		if(isBucket)
-			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(choice == 4)
-	{
-		stat_file << "Dynamic Filter Count: " << dynamicCount << endl;
-		if(isBucket)
-			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(mismatch)
-		stat_file << "Mismatch Filter Count: " << mismatchCount << endl;
-	stat_file << "Final Similar Pair Count: " << simPairCount << endl;
-
-	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
-	stat_file <<"Total Time Taken: "<< (clocksTosec(cl0,cl2)) << " milliseconds" << endl;
-	stat_file.close();
-	
-	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
-	// for simScore==0
-	freq_file << "0 " << global_score_freq[0] << endl; 
-	for(int i=1; i<101; i++)
-		freq_file << i << " " << global_score_freq[i] << endl;
-	// for simScore==100
-	freq_file << "101 " << global_score_freq[101] << endl; 
-	freq_file.close();
-
-	ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");	
-	// Writing the result-set for each graph to the file for each graph
-	for(auto g1 = g_res.begin(); g1 != g_res.end(); g1++)
-	{
-		for(auto g2 = g_res[g1->first].begin(); g2 != g_res[g1->first].end(); g2++)
-		{
-			all_graph_file << g1->first << " " << g2->first << " " << g2->second << endl;
-		}
-	}
-	all_graph_file.close();
-
+    printingAndWritingFinalStatistics(choice,looseCount,strictCount,staticCount,isBucket,partitionCount,dynamicCount,mismatch,mismatchCount,simPairCount,totalTimeTaken,res_dir,global_score_freq,g_res);
+    
 	return 0;
 }
 

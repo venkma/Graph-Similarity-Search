@@ -23,12 +23,109 @@ int SHINGLESIZE;
 
 // $ ./naive inp-file pagerank-file SHINGLESIZE simScore_threshold dataset-size-R dataset-size-S res-dir
 
+void printingAndWritingFinalStatistics(int dataset_size_R,int dataset_size_S,int SHINGLESIZE,double simScore_threshold,unsigned long long simPairCount,unsigned long long int global_time,unsigned long long int totalTimeTaken,const string res_dir,vector<long long int>& global_score_freq)
+{
+    cout << "GSimRSJoin: Sequence Similarity(naive)" << endl;
+	cout << "Dataset size of R: " << dataset_size_R << endl;
+	cout << "Dataset size of S: " << dataset_size_S << endl;
+	cout << "Shingle size: " << SHINGLESIZE << endl;
+	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
+	cout << "Similar Graphs: " << simPairCount << endl;
+	cout << "Memory used: " << memoryUsage()  << " MB" << endl;
+	cout << "Similarity Time: "<< global_time << " milliseconds" << endl;
+	cout << "Total Time Taken: "<< totalTimeTaken << " milliseconds" << endl;
+
+	// Writing statistics to the final stat file
+	ofstream stat_file("./"+res_dir+"/stat_file.txt");
+	stat_file << "GSimRSJoin: Sequence Similarity(naive)" << endl;
+	stat_file << "Dataset size of R: " << dataset_size_R << endl;
+	stat_file << "Dataset size of S: " << dataset_size_S << endl;
+	stat_file << "Shingle size: " << SHINGLESIZE << endl;
+	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
+	stat_file << "Similar Graphs: " << simPairCount << endl;
+	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file << "Similarity Time: "<< global_time << " milliseconds" << endl;
+	stat_file << "Total Time Taken: "<< totalTimeTaken  << " milliseconds" << endl;
+	stat_file.close();
+	
+	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
+	// for simScore==0
+	freq_file << "0 " << global_score_freq[0] << endl; 
+	for(int i=1; i<101; i++)
+		freq_file << i << " " << global_score_freq[i] << endl;
+	// for simScore==100
+	freq_file << "101 " << global_score_freq[101] << endl; 
+	freq_file.close();
+    
+}
+
+vector<pair<unsigned, double>> writingResultsForEachGraph(const string res_dir,int gR,vector<pair<unsigned, double>> &g_res,vector<Graph> &graph_dataset_R,vector<int>& score_freq,vector<unsigned long long int>& g_time,unsigned long long int global_time)
+{
+    	ofstream gfile;
+		gfile.open("./"+res_dir+"/graph_details/g_"+to_string(gR)+"_"+to_string(graph_dataset_R[gR].gid)+"_sim.txt");
+		ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");
+		all_graph_file.open("./"+res_dir+"/all_graph_file.txt",ios::app);
+
+		// Writing the result-set for each graph to the file for each graph
+		gfile << g_res.size() << endl;
+		for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
+		{
+			gfile << graph_dataset_R[gR].gid << " " << g_iter->first << " " << g_iter->second << endl;
+			all_graph_file<< graph_dataset_R[gR].gid << " " << g_iter->first << " " << g_iter->second << endl;
+		}
+		
+		g_res.clear();
+		all_graph_file.close();
+
+		// Writing g1's simScore-freq
+		// for simScore==0
+		gfile << "0 " << score_freq[0] << endl; 
+		score_freq[0] = 0;
+		for(int i = 1; i < 101; i++)
+		{
+			gfile << i << " " << score_freq[i] << endl;
+			score_freq[i] = 0;
+		}
+		// for simScore==100
+		gfile << "101 " << score_freq[101] << endl; 
+		score_freq[101] = 0;
+		gfile << g_time[gR] << " milliseconds" << endl;
+		gfile << global_time << " milliseconds" << endl;
+		gfile.close();
+		
+		return g_res;
+}
+
+vector<Graph> preprocessingRGraphs(vector<Graph>& graph_dataset_R)
+{
+    for(int graph_ind=0; graph_ind < graph_dataset_R.size(); graph_ind++)
+	{
+		graph_dataset_R[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
+		graph_dataset_R[graph_ind].walkAlgorithm(); // generate random walk of graph
+		graph_dataset_R[graph_ind].computeShingles(); // compute shingles
+	}
+	
+	return graph_dataset_R;
+}
+vector<Graph> preprocessingSGraphs(vector<Graph>& graph_dataset_S)
+{
+    for(int graph_ind=0; graph_ind < graph_dataset_S.size(); graph_ind++)
+	{
+		graph_dataset_S[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
+		graph_dataset_S[graph_ind].walkAlgorithm(); // generate random walk of graph
+		graph_dataset_S[graph_ind].computeShingles(); // compute shingles
+	}
+	
+	return graph_dataset_S;
+}
+
+
 int main(int argc, char const *argv[])
 {
 	if(argc!=8)
 		usage();
 
-	SHINGLESIZE = stoi(argv[3]); // size of each shingle
+	int SHINGLESIZE = stoi(argv[3]); // size of each shingle
 	double simScore_threshold = stod(argv[4]); // threshold to write only those graph pairs to all_graph_file.txt
 	int dataset_size_R = stoi(argv[5]); // dataset-size-R
 	int dataset_size_S = stoi(argv[6]); // dataset-size-S
@@ -61,19 +158,9 @@ int main(int argc, char const *argv[])
 	chrono::high_resolution_clock::time_point cl0 = chrono::high_resolution_clock::now();
 
 	// Preprocessing graph dataset R
-	for(int graph_ind=0; graph_ind < graph_dataset_R.size(); graph_ind++)
-	{
-		graph_dataset_R[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
-		graph_dataset_R[graph_ind].walkAlgorithm(); // generate random walk of graph
-		graph_dataset_R[graph_ind].computeShingles(); // compute shingles
-	}
+	graph_dataset_R = preprocessingRGraphs(graph_dataset_R);
 	// Preprocessing graph dataset S
-	for(int graph_ind=0; graph_ind < graph_dataset_S.size(); graph_ind++)
-	{
-		graph_dataset_S[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
-		graph_dataset_S[graph_ind].walkAlgorithm(); // generate random walk of graph
-		graph_dataset_S[graph_ind].computeShingles(); // compute shingles
-	}
+        graph_dataset_S = preprocessingSGraphs(graph_dataset_S);
 	
 	double simScore; // similarity score
 	unsigned long long simPairCount = 0; // Total similar graph pairs count
@@ -137,74 +224,16 @@ int main(int argc, char const *argv[])
 
 		g_time[gR] = clocksTosec(clTemp0,clTemp1); // Similarity Computation time for graph g1
 		global_time += g_time[gR]; // Adding this to global similarity time
-
+        
+        g_res = writingResultsForEachGraph(res_dir,gR,g_res,graph_dataset_R,score_freq,g_time,global_time);
 		// Creating Result Files for graph g1
-		ofstream gfile;
-		
-		gfile.open("./"+res_dir+"/graph_details/g_"+to_string(gR)+"_"+to_string(graph_dataset_R[gR].gid)+"_sim.txt");
-		all_graph_file.open("./"+res_dir+"/all_graph_file.txt",ios::app);
 
-		// Writing the result-set for each graph to the file for each graph
-		gfile << g_res.size() << endl;
-		for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
-		{
-			gfile << graph_dataset_R[gR].gid << " " << g_iter->first << " " << g_iter->second << endl;
-			all_graph_file<< graph_dataset_R[gR].gid << " " << g_iter->first << " " << g_iter->second << endl;
-		}
-		g_res.clear();
-		all_graph_file.close();
-
-		// Writing g1's simScore-freq
-		// for simScore==0
-		gfile << "0 " << score_freq[0] << endl; 
-		score_freq[0] = 0;
-		for(int i = 1; i < 101; i++)
-		{
-			gfile << i << " " << score_freq[i] << endl;
-			score_freq[i] = 0;
-		}
-		// for simScore==100
-		gfile << "101 " << score_freq[101] << endl; 
-		score_freq[101] = 0;
-		gfile << g_time[gR] << " milliseconds" << endl;
-		gfile << global_time << " milliseconds" << endl;
-		gfile.close();
 	}
 
 	chrono::high_resolution_clock::time_point cl1=chrono::high_resolution_clock::now();	
+	unsigned long long int totalTimeTaken = (clocksTosec(cl0,cl1));
 
-	cout << "GSimRSJoin: Sequence Similarity(naive)" << endl;
-	cout << "Dataset size of R: " << dataset_size_R << endl;
-	cout << "Dataset size of S: " << dataset_size_S << endl;
-	cout << "Shingle size: " << SHINGLESIZE << endl;
-	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
-	cout << "Similar Graphs: " << simPairCount << endl;
-	cout << "Memory used: " << memoryUsage()  << " MB" << endl;
-	cout << "Similarity Time: "<< global_time << " milliseconds" << endl;
-	cout << "Total Time Taken: "<< clocksTosec(cl0,cl1) << " milliseconds" << endl;
-
-	// Writing statistics to the final stat file
-	ofstream stat_file("./"+res_dir+"/stat_file.txt");
-	stat_file << "GSimRSJoin: Sequence Similarity(naive)" << endl;
-	stat_file << "Dataset size of R: " << dataset_size_R << endl;
-	stat_file << "Dataset size of S: " << dataset_size_S << endl;
-	stat_file << "Shingle size: " << SHINGLESIZE << endl;
-	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
-	stat_file << "Similar Graphs: " << simPairCount << endl;
-	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
-	stat_file << "Similarity Time: "<< global_time << " milliseconds" << endl;
-	stat_file << "Total Time Taken: "<< clocksTosec(cl0,cl1)  << " milliseconds" << endl;
-	stat_file.close();
-	
-	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
-	// for simScore==0
-	freq_file << "0 " << global_score_freq[0] << endl; 
-	for(int i=1; i<101; i++)
-		freq_file << i << " " << global_score_freq[i] << endl;
-	// for simScore==100
-	freq_file << "101 " << global_score_freq[101] << endl; 
-	freq_file.close();
-
+    printingAndWritingFinalStatistics(dataset_size_R,dataset_size_S,SHINGLESIZE,simScore_threshold,simPairCount,global_time,totalTimeTaken,res_dir,global_score_freq);
 	return 0;
 }
 

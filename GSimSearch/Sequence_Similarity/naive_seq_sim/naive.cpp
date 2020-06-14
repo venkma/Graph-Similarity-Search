@@ -16,9 +16,49 @@ unsigned long long int clocksTosec(chrono::high_resolution_clock::time_point sta
 // prints correct usage of program in case of an error
 void usage(); 
 
+//To Preprocess Graphs
+void preprocessingGraphs(Graph &query_graph,vector<Graph> &graph_dataset);
+
 int SHINGLESIZE;
 
 // $ ./naive inp-file pagerank-file SHINGLESIZE simScore_threshold dataset-size query_index res-dir
+void printingAndWritingFinalStatistics(int dataset_size,int query_index,int SHINGLESIZE,double simScore_threshold,vector<pair<unsigned, double>>& g_res,int totalTimeTaken,const string res_dir,vector<int>& global_score_freq,Graph query_graph)
+{
+    cout << "GSimSearch: Sequence Similarity(naive)" << endl;
+	cout << "Dataset size: " << dataset_size << endl;
+	cout << "Query Index: " << query_index << endl;
+	cout << "Query Graph id: " << query_graph.gid << endl;
+	cout << "Shingle size: " << SHINGLESIZE << endl;
+	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
+	cout << "Similarity pairs: " << g_res.size() << endl;
+	cout << "Memory used: " << memoryUsage()  << " MB" << endl;
+	cout << "Total Time Taken: "<< totalTimeTaken << " milliseconds" << endl;
+
+	// Writing statistics to the final stat file
+
+        ofstream stat_file("./"+res_dir+"/stat_final.txt");
+	stat_file.open("./"+res_dir+"/stat_file.txt");
+	
+	stat_file << "GSimSearch: Sequence Similarity(naive)" << endl;
+	stat_file << "Dataset size: " << dataset_size << endl;
+	stat_file << "Query Index: " << query_index << endl;
+	stat_file << "Query Graph id: " << query_graph.gid << endl;
+	stat_file << "Shingle size: " << SHINGLESIZE << endl;
+	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
+	stat_file << "Similarity pairs: " << g_res.size() << endl;
+	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file << "Total Time Taken: "<< totalTimeTaken  << " milliseconds" << endl;
+	stat_file.close();
+	
+	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
+	// for simScore==0
+	freq_file << "0 " << global_score_freq[0] << endl; 
+	for(int i=1; i<101; i++)
+		freq_file << i << " " << global_score_freq[i] << endl;
+	// for simScore==100
+	freq_file << "101 " << global_score_freq[101] << endl; 
+	freq_file.close();
+}
 
 int main(int argc, char const *argv[])
 {
@@ -58,16 +98,7 @@ int main(int argc, char const *argv[])
 	chrono::high_resolution_clock::time_point cl0 = chrono::high_resolution_clock::now();
 
 	// Preprocessing the graph dataset
-	query_graph.sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
-	query_graph.walkAlgorithm(); // generate random walk of graph
-	query_graph.computeShingles(); // compute shingles
-	for(int graph_ind = 0; graph_ind < graph_dataset.size(); graph_ind++)
-	{
-		graph_dataset[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
-		graph_dataset[graph_ind].walkAlgorithm(); // generate random walk of graph
-		graph_dataset[graph_ind].computeShingles(); // compute shingles
-	}
-
+	preprocessingGraphs(query_graph,graph_dataset);
 	double simScore;
 
 	// Result-set for each graph as vector of other graph's gid and their similarity score as double
@@ -108,51 +139,9 @@ int main(int argc, char const *argv[])
 
 	// For clock-time calculation
 	chrono::high_resolution_clock::time_point cl1 = chrono::high_resolution_clock::now();
-
-	// Creating Result Files for graph 
-	ofstream stat_file, all_graph_file;
-	all_graph_file.open("./"+res_dir+"/all_graph_file.txt");
-
-	// Writing the result-set for each graph to the file for each graph
-	for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
-	{
-		all_graph_file<< query_graph.gid << " " << g_iter->first << " " << g_iter->second << endl;
-	}
-	all_graph_file.close();
+    int totalTimeTaken = (clocksTosec(cl0,cl1));
+    printingAndWritingFinalStatistics(dataset_size,query_index,SHINGLESIZE,simScore_threshold,g_res,totalTimeTaken,res_dir,global_score_freq,query_graph);
 	
-	cout << "GSimSearch: Sequence Similarity(naive)" << endl;
-	cout << "Dataset size: " << dataset_size << endl;
-	cout << "Query Index: " << query_index << endl;
-	cout << "Query Graph id: " << query_graph.gid << endl;
-	cout << "Shingle size: " << SHINGLESIZE << endl;
-	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
-	cout << "Similarity pairs: " << g_res.size() << endl;
-	cout << "Memory used: " << memoryUsage()  << " MB" << endl;
-	cout << "Total Time Taken: "<< (clocksTosec(cl0,cl1)) << " milliseconds" << endl;
-
-	// Writing statistics to the final stat file
-	stat_file.open("./"+res_dir+"/stat_file.txt");
-	
-	stat_file << "GSimSearch: Sequence Similarity(naive)" << endl;
-	stat_file << "Dataset size: " << dataset_size << endl;
-	stat_file << "Query Index: " << query_index << endl;
-	stat_file << "Query Graph id: " << query_graph.gid << endl;
-	stat_file << "Shingle size: " << SHINGLESIZE << endl;
-	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
-	stat_file << "Similarity pairs: " << g_res.size() << endl;
-	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
-	stat_file << "Total Time Taken: "<< (clocksTosec(cl0,cl1))  << " milliseconds" << endl;
-	stat_file.close();
-	
-	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
-	// for simScore==0
-	freq_file << "0 " << global_score_freq[0] << endl; 
-	for(int i=1; i<101; i++)
-		freq_file << i << " " << global_score_freq[i] << endl;
-	// for simScore==100
-	freq_file << "101 " << global_score_freq[101] << endl; 
-	freq_file.close();
-
 	return 0;
 }
 
@@ -175,6 +164,18 @@ double memoryUsage()
 	struct rusage r_usage;
 	getrusage(RUSAGE_SELF, &r_usage);
 	return r_usage.ru_maxrss/1024.0;
+}
+void preprocessingGraphs(Graph &query_graph,vector<Graph> &graph_dataset)
+{
+    query_graph.sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
+	query_graph.walkAlgorithm(); // generate random walk of graph
+	query_graph.computeShingles(); // compute shingles
+	for(int graph_ind = 0; graph_ind < graph_dataset.size(); graph_ind++)
+	{
+		graph_dataset[graph_ind].sortGraph(); // sort vertex-set wrt quality and edge-list of each vertex
+		graph_dataset[graph_ind].walkAlgorithm(); // generate random walk of graph
+		graph_dataset[graph_ind].computeShingles(); // compute shingles
+	}
 }
 
 // parses the input graph dataset and query graph

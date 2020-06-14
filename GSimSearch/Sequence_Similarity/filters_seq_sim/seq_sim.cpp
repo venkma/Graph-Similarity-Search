@@ -2,6 +2,9 @@
 #include "rollingHash.h"
 #include "minhash.h"
 
+
+void applyingFiltersCommonpart(double simScore_threshold,double num_shingles_g2,double num_shingles_qg,long long &loose_filter_count,int choice,int g2,vector<Graph> &graph_dataset, Graph &query_graph,int SHINGLESIZE,unordered_set<unsigned> &candidate_pairs,long long &strong_filter_count, long long &candidate_graph_count);
+
 // computes Sequence Similarity of 2 input graphs
 double computeSimilarity(Graph &g1, Graph &g2)
 {
@@ -71,35 +74,9 @@ void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_se
 	{
 		// to ignore negative values: max(0,val)
 		double num_shingles_g2 = max(0,(int)graph_dataset[g2].vertexCount - SHINGLESIZE + 1);
-
-		if(simScore_threshold <= (num_shingles_g2/num_shingles_qg))
+        if(simScore_threshold <= (num_shingles_qg/num_shingles_g2))
 		{
-			loose_filter_count++;
-			if(choice > 1)
-			{
-				// Common Vertex filter
-				int common_vertices = commonVertices(query_graph, graph_dataset[g2]);
-				double possible_shingles = max(0,(int)common_vertices - SHINGLESIZE + 1); // to ignore negative values: max(0,val) 
-				
-				double compute_threshold=0;
-
-				if((num_shingles_g2 + num_shingles_qg - possible_shingles) != 0)
-					compute_threshold = (possible_shingles/double(num_shingles_g2 + num_shingles_qg - possible_shingles));
-
-				if(simScore_threshold <= compute_threshold)
-				{
-					strong_filter_count++;
-					// Adding graph to pruned graph data structure
-					candidate_pairs.insert(g2);
-					candidate_graph_count++;
-				}
-			}
-			else
-			{
-				// Adding graph to pruned graph data structure
-				candidate_pairs.insert(g2);
-				candidate_graph_count++;
-			}
+			applyingFiltersCommonpart(simScore_threshold,num_shingles_g2,num_shingles_qg,loose_filter_count,choice,g2,graph_dataset,query_graph,SHINGLESIZE,candidate_pairs,strong_filter_count,candidate_graph_count);
 		}
 		else
 		{
@@ -115,6 +92,22 @@ void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_se
 
 		if(simScore_threshold <= (num_shingles_qg/num_shingles_g2))
 		{
+			applyingFiltersCommonpart(simScore_threshold,num_shingles_g2,num_shingles_qg,loose_filter_count,choice,g2,graph_dataset,query_graph,SHINGLESIZE,candidate_pairs,strong_filter_count,candidate_graph_count);
+		}
+		else
+		{
+			// Since Graph g2 is not satisfying Loose Size filter 
+			break;
+		}
+	}
+	
+
+}
+
+
+void applyingFiltersCommonpart(double simScore_threshold,double num_shingles_g2,double num_shingles_qg,long long &loose_filter_count,int choice,int g2,vector<Graph> &graph_dataset, Graph &query_graph,int SHINGLESIZE,unordered_set<unsigned> &candidate_pairs,long long &strong_filter_count, long long &candidate_graph_count)
+{
+    
 			loose_filter_count++;
 			if(choice > 1)
 			{
@@ -141,14 +134,6 @@ void applyFilters(vector<Graph> &graph_dataset, Graph &query_graph, unordered_se
 				candidate_pairs.insert(g2);
 				candidate_graph_count++;
 			}
-		}
-		else
-		{
-			// Since Graph g2 is not satisfying Loose Size filter 
-			break;
-		}
-	}
-	
 
 }
 

@@ -20,6 +20,11 @@ double memoryUsage();
 // prints correct usage of program in case of an error
 void usage(); 
 
+//
+void computeSequenceSimilarity(vector<Graph> &graph_dataset,int g2,double simScore,double simScore_threshold,vector<int>& global_score_freq,vector<pair<unsigned, double>> &g_res,
+unsigned long &simPairCount);
+
+
 struct GraphComparator
 {
 	// Compare 2 Player objects using name
@@ -37,6 +42,97 @@ struct GraphComparator
 // static:  ./filter inp_file 3 simScore_threshold mismatch noofbuckets dataset-size query_index res-file
 // dynamic: ./filter inp_file 4 simScore_threshold mismatch noofbuckets dataset-size query_index res-file
 
+void printingAndWritingInitialStatistics(int choice,double simScore_threshold,int dataset_size,const string res_dir,bool mismatch,int no_of_buckets)
+{
+
+        cout << "GSimSearch: VEO Similarity(filters)" << endl;
+	cout << "Choice: " << choice << endl;
+	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
+	cout << "Dataset Size: " << dataset_size << endl;
+
+	ofstream stat_file(res_dir+"/stat_file.txt");
+	stat_file << "GSimSearch: VEO Similarity(filters)" << endl;
+	stat_file << "Choice: " << choice << endl;
+	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
+	stat_file << "Dataset Size: " << dataset_size << endl;
+	
+	if(choice >= 2)
+	{
+		cout << "Mismatch: " << mismatch << endl;
+		cout << "No of Buckets: " << no_of_buckets << endl;
+		stat_file << "Mismatch: " << mismatch << endl;
+		stat_file << "No of Buckets: " << no_of_buckets << endl;
+	}
+
+}
+void printingAndWritingFinalStatistics(int choice,unsigned long looseCount,unsigned long strictCount,unsigned long staticCount,bool isBucket,unsigned long partitionCount,unsigned long dynamicCount,bool mismatch,unsigned long mismatchCount,unsigned long simPairCount,int totalTimeTaken,const string res_dir,vector<int>& global_score_freq,vector<pair<unsigned, double>>& g_res,Graph& query_graph)
+{     // Displaying stat file...
+	if(choice >= 1)
+		cout << "Loose Filter Count: " << looseCount << endl;
+	if(choice >= 2)
+		cout << "Strict Filter Count: " << strictCount << endl;
+	if(choice == 3)
+	{
+		cout << "Static Filter Count: " << staticCount << endl;
+		if(isBucket)
+			cout << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(choice == 4)
+	{
+		cout << "Dynamic Filter Count: " << dynamicCount << endl;
+		if(isBucket)
+			cout << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(mismatch)
+		cout << "Mismatch Filter Count: " << mismatchCount << endl;
+	cout << "Final Similar Pair Count: " << simPairCount << endl;
+	cout << "Memory used: " << memoryUsage() << " MB" << endl;
+	cout <<"Total Time Taken: "<< totalTimeTaken << " milliseconds" << endl;
+	
+	// Writing counts to stat file
+	ofstream stat_file(res_dir+"/stat_file.txt");
+	if(choice >= 1)
+		stat_file << "Loose Filter Count: " << looseCount << endl;
+	if(choice >= 2)
+		stat_file << "Strict Filter Count: " << strictCount << endl;
+	if(choice == 3)
+	{
+		stat_file << "Static Filter Count: " << staticCount << endl;
+		if(isBucket)
+			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(choice == 4)
+	{
+		stat_file << "Dynamic Filter Count: " << dynamicCount << endl;
+		if(isBucket)
+			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
+	}
+	if(mismatch)
+		stat_file << "Mismatch Filter Count: " << mismatchCount << endl;
+	stat_file << "Final Similar Pair Count: " << simPairCount << endl;
+
+	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
+	stat_file <<"Total Time Taken: "<< totalTimeTaken << " milliseconds" << endl;
+	stat_file.close();
+	
+	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
+	// for simScore==0
+	freq_file << "0 " << global_score_freq[0] << endl; 
+	for(int i=1; i<101; i++)
+		freq_file << i << " " << global_score_freq[i] << endl;
+	// for simScore==100
+	freq_file << "101 " << global_score_freq[101] << endl; 
+	freq_file.close();
+
+	ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");
+	// Writing the result-set for each graph to the file for each graph
+	for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
+	{
+		all_graph_file << query_graph.gid << " " << g_iter->first << " " << g_iter->second << endl;
+	}
+	all_graph_file.close();    
+}
+
 int main(int argc, char const *argv[])
 {
 	if(argc < 7)
@@ -53,7 +149,7 @@ int main(int argc, char const *argv[])
 	bool isBucket=false; 
 
 	int choice = stoi(argv[2]);
-	
+
 	// Verifying args
 	if(choice==1)
 	{
@@ -114,24 +210,7 @@ int main(int argc, char const *argv[])
 	bool out = false;
 	double simScore; 
 
-	cout << "GSimSearch: VEO Similarity(filters)" << endl;
-	cout << "Choice: " << choice << endl;
-	cout << "Similarity Score Threshold: " << simScore_threshold << endl;
-	cout << "Dataset Size: " << dataset_size << endl;
-
-	ofstream stat_file(res_dir+"/stat_file.txt");
-	stat_file << "GSimSearch: VEO Similarity(filters)" << endl;
-	stat_file << "Choice: " << choice << endl;
-	stat_file << "Similarity Score Threshold: " << simScore_threshold << endl;
-	stat_file << "Dataset Size: " << dataset_size << endl;
-	
-	if(choice >= 2)
-	{
-		cout << "Mismatch: " << mismatch << endl;
-		cout << "No of Buckets: " << no_of_buckets << endl;
-		stat_file << "Mismatch: " << mismatch << endl;
-		stat_file << "No of Buckets: " << no_of_buckets << endl;
-	}
+       printingAndWritingInitialStatistics(choice,simScore_threshold,dataset_size,res_dir,mismatch,no_of_buckets);
 
 	VEO veo_sim = VEO(simScore_threshold);
 
@@ -195,29 +274,7 @@ int main(int argc, char const *argv[])
 		{
 			// naive computation of VEO similarity
 			simScore = veo_sim.computeSimilarity(query_graph, graph_dataset[g2], common);
-			if(simScore >= simScore_threshold)
-			{
-				// Incrementing count... 
-				if(simScore==0.0)
-				{
-					// Disjoint graphs
-					global_score_freq[0]++;
-				}
-				else if(simScore==100.0)
-				{
-					// Identical graphs
-					global_score_freq[101]++;
-				}
-				else
-				{
-					// example: 54.5% will be mapped to index 60
-					// example: 0.5% will be mapped to index 1
-					// example: 99.5% will be mapped to index 100
-					global_score_freq[(int)ceil(simScore)]++;
-				}
-				g_res.push_back(make_pair(graph_dataset[g2].gid, simScore));
-				simPairCount++;
-			}
+			computeSequenceSimilarity(graph_dataset,g2,simScore,simScore_threshold,global_score_freq,g_res,simPairCount);
 		}
 
 	}
@@ -266,100 +323,18 @@ int main(int argc, char const *argv[])
 
 		if(!out)
 		{
+			
 			// naive computation of VEO similarity
 			simScore = veo_sim.computeSimilarity(query_graph, graph_dataset[g2], common);
-			if(simScore >= simScore_threshold)
-			{
-				// Incrementing count... 
-				if(simScore==0.0)
-				{
-					// Disjoint graphs
-					global_score_freq[0]++;
-				}
-				else if(simScore==100.0)
-				{
-					// Identical graphs
-					global_score_freq[101]++;
-				}
-				else
-				{
-					// example: 54.5% will be mapped to index 60
-					// example: 0.5% will be mapped to index 1
-					// example: 99.5% will be mapped to index 100
-					global_score_freq[(int)ceil(simScore)]++;
-				}
-				g_res.push_back(make_pair(graph_dataset[g2].gid, simScore));
-				simPairCount++;
-			}
+			computeSequenceSimilarity(graph_dataset,g2,simScore,simScore_threshold,global_score_freq,g_res,simPairCount);
 		}
 
 	}	
 	chrono::high_resolution_clock::time_point cl2=chrono::high_resolution_clock::now();	
-
-	// Displaying stat file...
-	if(choice >= 1)
-		cout << "Loose Filter Count: " << looseCount << endl;
-	if(choice >= 2)
-		cout << "Strict Filter Count: " << strictCount << endl;
-	if(choice == 3)
-	{
-		cout << "Static Filter Count: " << staticCount << endl;
-		if(isBucket)
-			cout << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(choice == 4)
-	{
-		cout << "Dynamic Filter Count: " << dynamicCount << endl;
-		if(isBucket)
-			cout << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(mismatch)
-		cout << "Mismatch Filter Count: " << mismatchCount << endl;
-	cout << "Final Similar Pair Count: " << simPairCount << endl;
-	cout << "Memory used: " << memoryUsage() << " MB" << endl;
-	cout <<"Total Time Taken: "<< (clocksTosec(cl0,cl2)) << " milliseconds" << endl;
+        int totalTimeTaken = (clocksTosec(cl0,cl2));
+	printingAndWritingFinalStatistics(choice,looseCount,strictCount,staticCount,isBucket,partitionCount,dynamicCount,mismatch,mismatchCount,simPairCount,totalTimeTaken,res_dir,global_score_freq,g_res,query_graph);
+       
 	
-	// Writing counts to stat file
-	if(choice >= 1)
-		stat_file << "Loose Filter Count: " << looseCount << endl;
-	if(choice >= 2)
-		stat_file << "Strict Filter Count: " << strictCount << endl;
-	if(choice == 3)
-	{
-		stat_file << "Static Filter Count: " << staticCount << endl;
-		if(isBucket)
-			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(choice == 4)
-	{
-		stat_file << "Dynamic Filter Count: " << dynamicCount << endl;
-		if(isBucket)
-			stat_file << "Partiiton Filter Count: " << partitionCount << endl;
-	}
-	if(mismatch)
-		stat_file << "Mismatch Filter Count: " << mismatchCount << endl;
-	stat_file << "Final Similar Pair Count: " << simPairCount << endl;
-
-	stat_file << "Memory used: " << memoryUsage() << " MB" << endl;
-	stat_file <<"Total Time Taken: "<< (clocksTosec(cl0,cl2)) << " milliseconds" << endl;
-	stat_file.close();
-	
-	ofstream freq_file("./"+res_dir+"/freq_distr_file.txt");
-	// for simScore==0
-	freq_file << "0 " << global_score_freq[0] << endl; 
-	for(int i=1; i<101; i++)
-		freq_file << i << " " << global_score_freq[i] << endl;
-	// for simScore==100
-	freq_file << "101 " << global_score_freq[101] << endl; 
-	freq_file.close();
-
-	ofstream all_graph_file("./"+res_dir+"/all_graph_file.txt");
-	// Writing the result-set for each graph to the file for each graph
-	for(auto g_iter = g_res.begin(); g_iter != g_res.end(); g_iter++)
-	{
-		all_graph_file << query_graph.gid << " " << g_iter->first << " " << g_iter->second << endl;
-	}
-	all_graph_file.close();
 	
 	return 0;
 }
@@ -418,7 +393,33 @@ void sortGraphDataset(vector<Graph> &graph_dataset, Graph &query_graph)
 		sort(graph_dataset[i].edges.begin(), graph_dataset[i].edges.end()); // sort edge-set
 	}
 }
-
+void computeSequenceSimilarity(vector<Graph> &graph_dataset,int g2,double simScore,double simScore_threshold,vector<int>& global_score_freq,vector<pair<unsigned, double>> &g_res,
+unsigned long &simPairCount)
+{
+		if(simScore >= simScore_threshold)
+			{
+				// Incrementing count... 
+				if(simScore==0.0)
+				{
+					// Disjoint graphs
+					global_score_freq[0]++;
+				}
+				else if(simScore==100.0)
+				{
+					// Identical graphs
+					global_score_freq[101]++;
+				}
+				else
+				{
+					// example: 54.5% will be mapped to index 60
+					// example: 0.5% will be mapped to index 1
+					// example: 99.5% will be mapped to index 100
+					global_score_freq[(int)ceil(simScore)]++;
+				}
+				g_res.push_back(make_pair(graph_dataset[g2].gid, simScore));
+				simPairCount++;
+			}
+}
 bool graphComp(Graph &g1, Graph &g2)
 {
 	return g1.vertexCount+g1.edgeCount < g2.vertexCount+g2.edgeCount;
